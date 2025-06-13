@@ -21,6 +21,10 @@ import time
 import requests
 import bittensor as bt
 import asyncio
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 from oneoneone.protocol import GoogleMapsReviewsSynapse
 from oneoneone.validator.reward import get_rewards
