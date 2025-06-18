@@ -25,6 +25,7 @@ describe('utils/validator/google-maps/create-synthetic/get-eligible-place.js', (
   beforeEach(() => {
     selectedPlace = {
       fid: 'selected-fid',
+      placeId: 'selected-place-id',
       title: 'Selected Place',
       reviewsCount: 10_000,
       type: 'place',
@@ -32,6 +33,7 @@ describe('utils/validator/google-maps/create-synthetic/get-eligible-place.js', (
 
     items = Array.from({ length: config.VALIDATOR.APIFY_SEARCH_MAX_ITEMS }, (_, index) => ({
       fid: `fid-${index}`,
+      placeId: `place-id-${index}`,
       title: `title-${index}`,
       reviewsCount: index,
       type: 'place',

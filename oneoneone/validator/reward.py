@@ -22,6 +22,10 @@ import numpy as np
 import requests
 from typing import List, Dict, Any
 import bittensor as bt
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 from oneoneone.config import VALIDATOR_API_TIMEOUT, SYNAPSE_TIMEOUT
 

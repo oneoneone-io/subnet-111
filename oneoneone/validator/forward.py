@@ -21,6 +21,10 @@ import time
 import requests
 import bittensor as bt
 import asyncio
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 from oneoneone.protocol import GoogleMapsReviewsSynapse
 from oneoneone.validator.reward import get_rewards
@@ -86,7 +90,7 @@ async def forward(self):
 
     # Create synthetic task with a random Google Maps place
     task = await create_synthetic_task()
-    fid = task["dataId"]  # This is the fid from the Node.js validator
+    fid = task["dataId"]  # This is the fid from the Node.js validator    
 
     # Store the miner UIDs for scoring
     self.current_miner_uids = miner_uids
@@ -125,7 +129,7 @@ async def forward(self):
             response = await self.dendrite(
                 axons=[axon],
                 synapse=GoogleMapsReviewsSynapse(
-                    fid=fid,
+                    fid=fid,                    
                     language=language,
                     sort=sort,
                     timeout=timeout,

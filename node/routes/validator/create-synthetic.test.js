@@ -49,6 +49,7 @@ describe('routes/validator/create-synthetic.js', () => {
     };
     selectedPlace = {
       fid: 'selected-fid',
+      placeId: 'selected-place-id',
       title: 'Selected Place',
       reviewsCount: 10_000,
       type: 'place',
@@ -72,6 +73,7 @@ describe('routes/validator/create-synthetic.js', () => {
         status: 'success',
         task: {
           dataId: selectedPlace.fid,
+          id: selectedPlace.placeId,
           synapse_params: {
             language: config.VALIDATOR.GOOGLE_REVIEWS_SYNAPSE_PARAMS.language,
             sort: config.VALIDATOR.GOOGLE_REVIEWS_SYNAPSE_PARAMS.sort,
@@ -128,6 +130,7 @@ describe('routes/validator/create-synthetic.js', () => {
         status: 'success',
         task: {
           dataId: selectedPlace.fid,
+          id: selectedPlace.placeId,
           synapse_params: {
             language: config.VALIDATOR.GOOGLE_REVIEWS_SYNAPSE_PARAMS.language,
             sort: config.VALIDATOR.GOOGLE_REVIEWS_SYNAPSE_PARAMS.sort,
