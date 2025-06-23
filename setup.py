@@ -26,8 +26,8 @@ with open("requirements.txt", "r") as f:
 
 setup(
     name="oneoneone",
-    version="0.0.1",
-    description="Bittensor Subnet 111 - Google Maps Reviews",
+    version="1.1.0",
+    description="Bittensor Subnet 111 - A decentralized protocol for open-source intelligence",
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="oneoneone",

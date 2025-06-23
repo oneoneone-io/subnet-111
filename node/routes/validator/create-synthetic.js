@@ -15,6 +15,7 @@ const output = ({ selectedPlace, totalDuration }) => {
     status: 'success',
     task: {
       dataId: selectedPlace.fid,  // Use fid as dataId
+      id: selectedPlace.placeId,
       synapse_params: {
         language: config.VALIDATOR.GOOGLE_REVIEWS_SYNAPSE_PARAMS.language,
         sort: config.VALIDATOR.GOOGLE_REVIEWS_SYNAPSE_PARAMS.sort,

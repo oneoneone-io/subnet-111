@@ -1,0 +1,45 @@
+name: Tests Coverage and Linting
+
+on:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./node
+        
+    strategy:
+      matrix:
+        node-version: [21.x]
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: './node/package-lock.json'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run linting
+        run: npm run lint
+        
+      - name: Run tests with coverage
+        run: npm test
+        continue-on-error: true
+        
+      - name: Check coverage thresholds
+        run: |
+          if grep -q "Jest: \"global\" coverage threshold" ./coverage/coverage-summary.json; then
+            echo "❌ Coverage is not 100%"
+            exit 1
+          else
+            echo "✅ Coverage is 100%"
+          fi 

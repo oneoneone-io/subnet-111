@@ -14,6 +14,7 @@ jest.mock('#utils/validator/google-maps/score/prepare-responses.js', () => ({
 jest.mock('#utils/validator/google-maps/score/calculate-final-scores.js');
 jest.mock('#utils/validator/google-maps/score/perform-batch-spot-check.js');
 jest.mock('#utils/validator/google-maps/score/validate-miner-against-batch.js');
+jest.mock('#utils/validator/google-maps/score/prepare-and-send-for-digestion.js', () => jest.fn().mockResolvedValue(true))
 
 jest.mock('#modules/response/index.js', () => ({
   success: jest.fn(),

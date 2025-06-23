@@ -5,6 +5,7 @@ import performBatchSpotCheck from '#utils/validator/google-maps/score/perform-ba
 import validateMinerAgainstBatch from '#utils/validator/google-maps/score/validate-miner-against-batch.js';
 import calculateFinalScores from '#utils/validator/google-maps/score/calculate-final-scores.js';
 import { prepareResponses } from '#utils/validator/google-maps/score/prepare-responses.js';
+import prepareAndSendForDigestion from '#utils/validator/google-maps/score/prepare-and-send-for-digestion.js';
 
 /**
  * Output the result of the score route
@@ -156,6 +157,10 @@ const execute = async(request, response) => {
 
     // Return scoring results with statistics
     const result = output({fid, scores, minScore, maxScore, meanScore, finalScores});
+    
+    // Send the data for digestion. Don't wait for it to complete
+    prepareAndSendForDigestion(responses, minerUIDs, fid);
+
     return responseService.success(response, result);
   } catch (error) {
     logger.error(`Error scoring responses:`, error);

@@ -2,7 +2,7 @@ import localhostOnly from './localhost-only.js';
 import responseService from '#modules/response/index.js';
 
 jest.mock('#modules/logger/index.js', () => ({
-  warn: jest.fn()
+  warning: jest.fn()
 }));
 
 describe('modules/middlewares/localhost-only', () => {

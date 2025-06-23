@@ -158,6 +158,10 @@ while true; do
         # Wait a moment for processes to fully stop
         sleep 5
         
+        # Discard any local changes before pulling
+        log "Discarding local changes before pull..."
+        git checkout . 2>&1 | tee -a "$LOG_FILE" || true
+        
         # Pull latest changes
         log "Pulling latest changes..."
         git config pull.rebase false 2>/dev/null || true

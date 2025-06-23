@@ -38,6 +38,7 @@ const getEligiblePlace = async () => {
   const places = items
   .filter(result => result.type === 'place') // Only include place results
   .map(place => ({
+    placeId: place.placeId,
     fid: place.fid,
     name: place.title,
     reviewCount: place.reviewsCount || 0
