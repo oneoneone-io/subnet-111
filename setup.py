@@ -26,7 +26,7 @@ with open("requirements.txt", "r") as f:
 
 setup(
     name="oneoneone",
-    version="1.1.0",
+    version="1.1.1",
     description="Bittensor Subnet 111 - A decentralized protocol for open-source intelligence",
     long_description=long_description,
     long_description_content_type="text/markdown",
