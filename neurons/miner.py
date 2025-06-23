@@ -65,7 +65,7 @@ class Miner(BaseMinerNeuron):
             The synapse object with reviews data filled in
         """
         bt.logging.debug(
-            f"Received request - fid: {synapse.fid}, placeid: {synapse.placeid}, language: {synapse.language}, sort: {synapse.sort}, timeout: {synapse.timeout}"
+            f"Received request - fid: {synapse.fid}, language: {synapse.language}, sort: {synapse.sort}, timeout: {synapse.timeout}"
         )
 
         try:
