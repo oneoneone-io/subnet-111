@@ -191,6 +191,8 @@ If you are a validator, please contact the subnet team and get your `PLATFORM_TO
 
 Before running miners or validators, you need to register your wallet to the subnet:
 
+#### Mainnet (Subnet 111)
+
 ```bash
 # Install btcli
 pip install bittensor-cli
@@ -199,11 +201,22 @@ pip install bittensor-cli
 btcli subnet register --no_prompt --wallet.name "miner" --wallet.hotkey "default" --netuid "111"
 ```
 
+#### Testnet (Subnet 376)
+
+For testing and development, you can use the testnet:
+
+```bash
+# Register to testnet subnet 376 (replace with your wallet details)
+btcli subnet register --no_prompt --wallet.name "miner" --wallet.hotkey "default" --netuid "376" --subtensor.network test
+```
+
 **Important Notes:**
 - Replace `miner` with your actual wallet name
 - Replace `default` with your actual hotkey name
-- Registration requires TAO for subnet fees
+- Mainnet registration requires TAO for subnet fees
+- Testnet uses test TAO (free)
 - Each miner/validator needs a separate hotkey registration
+- Use testnet for development and testing before deploying to mainnet
 
 ### 4. Running the Network
 
@@ -217,15 +230,25 @@ The auto-updater script checks for updates every 20 minutes and only restarts pr
 # Make the auto-updater script executable
 chmod +x auto-updater.sh
 
+# Mainnet examples (subnet 111)
 # Start validator with auto-updater (recommended)
 pm2 start ./auto-updater.sh --name "autoupdater-validator-prod" -- validator 111 validator default 9000
 
 # Start miner with auto-updater (recommended)
 pm2 start ./auto-updater.sh --name "autoupdater-miner-prod" -- miner 111 miner default 9001
 
+# Testnet examples (subnet 376)
+# Start validator with auto-updater on testnet
+pm2 start ./auto-updater.sh --name "autoupdater-validator-test" -- validator 376 validator default 9000 test
+
+# Start miner with auto-updater on testnet
+pm2 start ./auto-updater.sh --name "autoupdater-miner-test" -- miner 376 miner default 9001 test
+
 # View auto-updater logs
 pm2 logs autoupdater-validator-prod
 pm2 logs autoupdater-miner-prod
+pm2 logs autoupdater-validator-test
+pm2 logs autoupdater-miner-test
 ```
 
 **Benefits of using the auto-updater:**
@@ -250,8 +273,11 @@ If you prefer manual control over the processes:
 # Start the Node.js stack with PM2
 pm2 start npm --name node-miner --cwd ./node -- run miner:start
 
-# Start the Python miner with PM2
+# Mainnet (subnet 111)
 pm2 start "python neurons/miner.py --netuid 111 --wallet.name <your_wallet_name> --wallet.hotkey <your_hotkey_name> --logging.debug --axon.port 9001" --name miner
+
+# Testnet (subnet 376)
+pm2 start "python neurons/miner.py --netuid 376 --wallet.name <your_wallet_name> --wallet.hotkey <your_hotkey_name> --logging.debug --axon.port 9001 --subtensor.network test" --name miner-test
 ```
 
 ##### For Validators
@@ -260,8 +286,11 @@ pm2 start "python neurons/miner.py --netuid 111 --wallet.name <your_wallet_name>
 # Start the Node.js stack with PM2
 pm2 start npm --name node-validator --cwd ./node -- run validator:start
 
-# Start the Python validator with PM2
+# Mainnet (subnet 111)
 pm2 start "python neurons/validator.py --netuid 111 --wallet.name <your_wallet_name> --wallet.hotkey <your_hotkey_name> --logging.debug --axon.port 9000" --name validator
+
+# Testnet (subnet 376)
+pm2 start "python neurons/validator.py --netuid 376 --wallet.name <your_wallet_name> --wallet.hotkey <your_hotkey_name> --logging.debug --axon.port 9000 --subtensor.network test" --name validator-test
 ```
 
 #### Managing PM2 Processes
