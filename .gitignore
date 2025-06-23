@@ -163,3 +163,113 @@ testing/
 
 # Editors
 .vscode/settings.json
+
+# ===== NODE.JS (node/ directory) =====
+
+# Dependencies
+node/node_modules/
+node/package-lock.json
+node/npm-debug.log*
+node/yarn-debug.log*
+node/yarn-error.log*
+
+# Runtime data
+node/pids
+node/*.pid
+node/*.seed
+node/*.pid.lock
+
+# Coverage directory used by tools like istanbul
+node/coverage/
+node/*.lcov
+
+# nyc test coverage
+node/.nyc_output
+
+# Grunt intermediate storage
+node/.grunt
+
+# Bower dependency directory
+node/bower_components
+
+# node-waf configuration
+node/.lock-wscript
+
+# Compiled binary addons
+node/build/Release
+
+# Dependency directories
+node/jspm_packages/
+
+# TypeScript cache
+node/*.tsbuildinfo
+
+# Optional npm cache directory
+node/.npm
+
+# Optional eslint cache
+node/.eslintcache
+
+# Optional REPL history
+node/.node_repl_history
+
+# Output of 'npm pack'
+node/*.tgz
+
+# Yarn Integrity file
+node/.yarn-integrity
+
+# dotenv environment variables file (already covered above, but keeping for clarity)
+node/.env.test
+node/.env.local
+node/.env.production
+
+# parcel-bundler cache
+node/.parcel-cache
+
+# Next.js build output
+node/.next
+
+# Nuxt.js build / generate output
+node/.nuxt
+
+# Gatsby files
+node/public
+
+# Storybook build outputs
+node/.out
+node/.storybook-out
+
+# Temporary folders
+node/tmp/
+node/temp/
+
+# ===== GLOBAL PATTERNS =====
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+*.swp
+*.swo
+*~
+
+# ===== PROJECT SPECIFIC =====
+
+# Bittensor specific
+.wallet/
+*.wallet
+
+# PM2 logs and files
+.pm2/
+*.pm2.log
+
+# Testing and validation outputs
+test_outputs/
+validation_results/
