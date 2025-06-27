@@ -31,4 +31,4 @@ MAX_MINER_COUNT = 50  # Maximum number of miners to query in each validation rou
 SYNAPSE_WAIT_TIME = 60 * 20  # Time to wait between validator forward passes (seconds)
 
 # Validator minimum stake
-VALIDATOR_MIN_STAKE = 1.024e3
+VALIDATOR_MIN_STAKE = 1.024e3 * 50
