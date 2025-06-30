@@ -25,7 +25,7 @@ VALIDATOR_API_TIMEOUT = 180  # Timeout for calls to validator Node.js API (allow
 SYNAPSE_TIMEOUT = 120  # Timeout for synapse queries between validators and miners
 
 # Miner selection configuration
-MAX_MINER_COUNT = 50  # Maximum number of miners to query in each validation round
+MAX_MINER_COUNT = 100  # Maximum number of miners to query in each validation round
 
 # Timing configurations
 SYNAPSE_WAIT_TIME = 60 * 20  # Time to wait between validator forward passes (seconds)
