@@ -16,7 +16,7 @@ export default {
     },
 
     // Apify actor parameters
-    APIFY_SEARCH_MAX_ITEMS: 20,
+    APIFY_SEARCH_MAX_ITEMS: 80,
 
     // Synapse configurations
     // Parameters used in synapse queries for different task types
