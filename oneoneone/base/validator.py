@@ -61,6 +61,10 @@ class BaseValidatorNeuron(BaseNeuron):
         bt.logging.info("Building validation weights.")
         self.scores = np.zeros(self.metagraph.n, dtype=np.float32)
 
+        # Miner emission control
+        self.burner_uid = 0  # UID to burn emissions to
+        self.burner_weight = 0.75  # Percentage of weight to burn (75%)
+
         # Init sync with the network. Updates the metagraph.
         self.sync()
 
@@ -225,26 +229,32 @@ class BaseValidatorNeuron(BaseNeuron):
                 f"Scores contain NaN values. This may be due to a lack of responses from miners, or a bug in your reward functions."
             )
 
-        # Calculate the average reward for each uid across non-zero values.
-        # Replace any NaN values with 0.
-        # Compute the norm of the scores
-        norm = np.linalg.norm(self.scores, ord=1, axis=0, keepdims=True)
-
-        # Check if the norm is zero or contains NaN values
-        if np.any(norm == 0) or np.isnan(norm).any():
-            norm = np.ones_like(norm)  # Avoid division by zero or NaN
-
-        # Compute raw_weights safely
-        raw_weights = self.scores / norm
+        # Build uids and scores lists
+        uids = self.metagraph.uids.tolist()
+        scores = self.scores.tolist()
+        
+        # Apply miner emission control - ensure burner_uid is in the list
+        if self.burner_uid not in uids:
+            bt.logging.debug(f"Inserting burner UID {self.burner_uid} for burn allocation.")
+            uids.insert(0, self.burner_uid)
+            scores.insert(0, 0.0)
+        
+        # Log original weights before burner control
+        total_scores = sum(scores)
+        original_weights = [score / total_scores if total_scores > 0 else 0.0 for score in scores]
+        bt.logging.debug(f"Original weights before burner: {original_weights}")
+        
+        # Calculate weights with burner control
+        raw_weights = self._calculate_weights_with_burner(uids, scores)
 
         bt.logging.debug("raw_weights", raw_weights)
-        bt.logging.debug("raw_weight_uids", str(self.metagraph.uids.tolist()))
+        bt.logging.debug("raw_weight_uids", str(uids))
         # Process the raw weights to final_weights via subtensor limitations.
         (
             processed_weight_uids,
             processed_weights,
         ) = process_weights_for_netuid(
-            uids=self.metagraph.uids,
+            uids=uids,
             weights=raw_weights,
             netuid=self.config.netuid,
             subtensor=self.subtensor,
@@ -277,6 +287,26 @@ class BaseValidatorNeuron(BaseNeuron):
             bt.logging.info("set_weights on chain successfully!")
         else:
             bt.logging.error("set_weights failed", msg)
+
+    def _calculate_weights_with_burner(self, uids, scores):
+        """Calculate weights with burner emission control."""
+        remaining_weight = 1.0 - self.burner_weight
+        
+        # Calculate total score excluding burner UID
+        total_other_scores = sum(score for uid, score in zip(uids, scores) if uid != self.burner_uid)
+        
+        # Calculate weights
+        weights = []
+        for uid, score in zip(uids, scores):
+            if uid == self.burner_uid:
+                weights.append(self.burner_weight)
+            elif total_other_scores > 0:
+                weights.append((score / total_other_scores) * remaining_weight)
+            else:
+                weights.append(0.0)
+        
+        bt.logging.debug(f"Applied miner emission control: burner_uid={self.burner_uid}, burner_weight={self.burner_weight}")
+        return weights
 
     def resync_metagraph(self):
         """Resyncs the metagraph and updates the hotkeys and moving averages based on the new metagraph."""
