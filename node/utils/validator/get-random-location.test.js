@@ -20,7 +20,7 @@ describe('#utils/validator/get-random-location.js', () => {
 
   test('should return a random location', () => {
     const result = getRandomLocation();
-    expect(random.fromArray).toHaveBeenCalledTimes(2);
+    expect(random.fromArray).toHaveBeenCalledTimes(3);
     expect(random.fromArray).toHaveBeenCalledWith([{ name: 'city1', isoCode: 'city1' }, { name: 'city2', isoCode: 'city2' }]);
     expect(random.fromArray).toHaveBeenCalledWith([{ name: 'state1', isoCode: 'state1' }, { name: 'state2', isoCode: 'state2' }]);
     expect(result).toEqual('city1, state1');
