@@ -13,7 +13,7 @@ const app = express();
 const PORT = process.env.VALIDATOR_NODE_PORT || 3002;
 
 // Middleware
-app.use(express.json({ limit: '100mb' }));
+app.use(express.json({ limit: '1gb' }));
 app.use(localhostOnly);
 
 // Create synthetic validation tasks with place data
