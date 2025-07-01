@@ -254,8 +254,8 @@ class BaseValidatorNeuron(BaseNeuron):
             processed_weight_uids,
             processed_weights,
         ) = process_weights_for_netuid(
-            uids=uids,
-            weights=raw_weights,
+            uids=np.array(uids),
+            weights=np.array(raw_weights),
             netuid=self.config.netuid,
             subtensor=self.subtensor,
             metagraph=self.metagraph,
