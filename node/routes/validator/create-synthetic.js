@@ -1,26 +1,21 @@
-import config from '#config';
 import responseService from '#modules/response/index.js';
 import time from '#modules/time/index.js';
 import logger from '#modules/logger/index.js';
 import retryable from '#modules/retryable/index.js';
-import getEligiblePlace from '#utils/validator/google-maps/create-synthetic/get-eligible-place.js';
+import Types from '#utils/validator/types/index.js';
 
 /**
  * Output the result of the create synthetic task route
  * @param {Object} param0 - The parameters
  * @returns {Object} - The output
  */
-const output = ({ selectedPlace, totalDuration }) => {
+const output = ({ metadata, totalDuration, typeId, typeName }) => {
   return {
     status: 'success',
     task: {
-      dataId: selectedPlace.fid,  // Use fid as dataId
-      id: selectedPlace.placeId,
-      synapse_params: {
-        language: config.VALIDATOR.GOOGLE_REVIEWS_SYNAPSE_PARAMS.language,
-        sort: config.VALIDATOR.GOOGLE_REVIEWS_SYNAPSE_PARAMS.sort,
-        timeout: config.VALIDATOR.GOOGLE_REVIEWS_SYNAPSE_PARAMS.timeout
-      },
+      typeId,
+      typeName,
+      metadata,
       timestamp: time.getCurrentTimestamp(),
       totalTime: totalDuration
     }
@@ -71,20 +66,31 @@ const execute = async (request, response) => {
   }
 
   try {
-    // Get an eligible place
-    logger.info(`Starting synthetic task creation.`);
-    const selectedPlace = await retryable(getEligiblePlace, 10);
+    // Get a random type
+    const selectedType = Types.getRandomType();
+    logger.info(`Selected type: ${selectedType.name}`);
+
+    // Create the synthetic task metadata
+    logger.info(`${selectedType.name} - Starting synthetic task creation.`);
+    const metadata = await retryable(selectedType.createSyntheticTask, 10);
 
     const totalDuration = time.getDuration(startTime);
-    logger.info(`Successfully created synthetic task in ${totalDuration.toFixed(2)}s`);
+    logger.info(`${selectedType.name} - Successfully created synthetic task in ${totalDuration.toFixed(2)}s`);
 
     // Return the synthetic task data
-    const result = output({ selectedPlace, totalDuration });
-    responseService.success(response, result);
+    const syntheticTask = output({ 
+      metadata, 
+      totalDuration, 
+      typeId: selectedType.id, 
+      typeName: selectedType.name
+    });
+    responseService.success(response, syntheticTask);
   } catch (error) {
     const totalDuration = time.getDuration(startTime);
-    logger.error(`Error creating synthetic task (total time: ${totalDuration.toFixed(2)}s):`, error);
+    logger.error(`${selectedType.name} - Error creating synthetic task (total time: ${totalDuration.toFixed(2)}s):`, error);
     responseService.internalServerError(response, {
+      typeId: selectedType.id,
+      typeName: selectedType.name,
       error: 'Failed to create synthetic task',
       message: error.message,
       totalTime: totalDuration,

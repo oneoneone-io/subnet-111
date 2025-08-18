@@ -36,8 +36,8 @@ app.listen(PORT, () => {
   logger.info(`  - Synapse timeout: ${config.VALIDATOR.SYNAPSE_TIMEOUT} seconds`);
   logger.info(`  - Google Reviews synapse parameters:`);
   logger.info(`    * Count: dynamically generated`);
-  logger.info(`    * Language: ${config.VALIDATOR.GOOGLE_REVIEWS_SYNAPSE_PARAMS.language}`);
-  logger.info(`    * Sort: ${config.VALIDATOR.GOOGLE_REVIEWS_SYNAPSE_PARAMS.sort}`);
+  logger.info(`    * Language: ${config.VALIDATOR.GOOGLE_MAPS_REVIEWS.REVIEWS_SYNAPSE_PARAMS.language}`);
+  logger.info(`    * Sort: ${config.VALIDATOR.GOOGLE_MAPS_REVIEWS.REVIEWS_SYNAPSE_PARAMS.sort}`);
   logger.info(`  - Apify token configured: ${Boolean(process.env.APIFY_TOKEN)}`);
   logger.info('='.repeat(50));
 });

@@ -8,27 +8,27 @@ import config from '#config';
  * This function takes reviews from multiple miners and validates their authenticity by checking
  * them against the actual Google Maps data using Apify actor.
  *
- * @param {Array} allSelectedReviews - Array of objects containing miner information and their reviews. Each object has format {minerUID: string, reviews: Array<{reviewUrl: string, ...}>}
+ * @param {Array} selectedSpotCheckReviews - Array of objects containing miner information and their reviews. Each object has format {minerUID: string, reviews: Array<{reviewUrl: string, ...}>}
  * @param {string} fid - The FID (Facility ID) of the place in Google Maps to verify reviews against
  * @returns {Promise<Object>} - Returns a Map where keys are review IDs and values are verification results containing details about whether the review exists and matches the submitted data
  */
-const performBatchSpotCheck = async (allSelectedReviews, fid) => {
+const performBatchSpotCheck = async (selectedSpotCheckReviews, fid) => {
   const startTime = Date.now();
 
   try {
     // Collect all unique URLs from all miners
-    const startUrls = allSelectedReviews
+    const startUrls = selectedSpotCheckReviews
       .flatMap(selectedReview => selectedReview.reviews.map(review => ({
         url: review.reviewUrl,
         method: "GET"
       }))
     );
 
-    logger.info(`Batch spot check: Verifying ${startUrls.length} reviews from ${allSelectedReviews.length} miners for fid: ${fid}`);
+    logger.info(`Google Maps Reviews - Batch spot check: Verifying ${startUrls.length} reviews from ${selectedSpotCheckReviews.length} miners for fid: ${fid}`);
 
     // Make one batch call to Apify with all URLs
     const results = await apify.runActorAndGetResults(
-      config.VALIDATOR.APIFY_ACTORS.GOOGLE_MAPS_REVIEWS_SPOT_CHECK,
+      config.VALIDATOR.GOOGLE_MAPS_REVIEWS.APIFY_ACTORS.SPOT_CHECK,
       {
         startUrls,
       }
@@ -43,12 +43,12 @@ const performBatchSpotCheck = async (allSelectedReviews, fid) => {
     }
 
     const duration = time.getDuration(startTime);
-    logger.info(`Batch spot check complete: Verified ${results.length} reviews in ${duration.toFixed(2)}s`);
+    logger.info(`Google Maps Reviews - Batch spot check complete: Verified ${results.length} reviews in ${duration.toFixed(2)}s`);
 
     return verifiedReviews;
   } catch (error) {
     const duration = time.getDuration(startTime);
-    logger.error(`Batch spot check failed with error (took ${duration.toFixed(2)}s):`, error);
+    logger.error(`Google Maps Reviews - Batch spot check failed with error (took ${duration.toFixed(2)}s):`, error);
     throw error;
   }
 }

@@ -1,7 +1,6 @@
 import logger from '#modules/logger/index.js';
 import config from '#config';
-import checkResponseValidity from '#utils/validator/check-response-validity.js';
-import generateValidationData from '#utils/validator/validation-data.js';
+import { prepareValidationResults } from '#utils/validator/validation-result.js';
 import array from '#modules/array/index.js';
 
 /**
@@ -28,7 +27,7 @@ import array from '#modules/array/index.js';
  * ], 'facility123', 'miner456');
  * // Returns { mostRecentDate: Date('2024-03-20'), selectedReviews: [...] }
  */
-const getReviewsForSpotCheck = (reviews, fid, minerUID) => {
+const getReviewsForSpotCheck = (reviews, minerUID) => {
   // Early return if no reviews
   if (!reviews?.length) {
     return {
@@ -59,7 +58,7 @@ const getReviewsForSpotCheck = (reviews, fid, minerUID) => {
 
   // Log the most recent review selection
   logger.info(
-    `UID ${minerUID}: Selected most recent review ${mostRecentReview.reviewId} - (${mostRecentReview.publishedAtDate}) for spot check`
+    `Google Maps Reviews - UID ${minerUID}: Selected most recent review ${mostRecentReview.reviewId} - (${mostRecentReview.publishedAtDate}) for spot check`
   );
 
   // If we only need one review, return just the most recent
@@ -81,7 +80,7 @@ const getReviewsForSpotCheck = (reviews, fid, minerUID) => {
   // Log random selections for spot check
   for (const review of randomReviews) {
     logger.info(
-      `UID ${minerUID}: Selected random review ${review.reviewId} - (${review.publishedAtDate}) for spot check`
+      `Google Maps Reviews - UID ${minerUID}: Selected random review ${review.reviewId} - (${review.publishedAtDate}) for spot check`
     );
   }
 
@@ -98,19 +97,17 @@ const getReviewsForSpotCheck = (reviews, fid, minerUID) => {
  * @param {Array<Array<Object>>} responses - Array of response arrays from different miners, where each response
  *                                          contains review objects
  * @param {Array<string|number>} minerUIDs - Array of miner unique identifiers corresponding to each response
- * @param {string} fid - Facility ID that should match across all reviews
+ * @param {Array<number>} responseTimes - Array of response times corresponding to each response
+ * @param {number} synapseTimeout - The synapse timeout
  *
  * @returns {Object} An object containing validation results and selected reviews for spot checking
- * @returns {Array<Object>} .validationData - Array of validation results for each miner
- * @returns {Array<Object>} .validationData[].minerUID - The miner's unique identifier
- * @returns {boolean} .validationData[].passedValidation - Whether the miner's response passed all validations
- * @returns {string} [.validationData[].validationError] - Error message if validation failed
- * @returns {number} [.validationData[].count] - Number of valid reviews if validation passed
- * @returns {Date} [.validationData[].mostRecentDate] - Date of the most recent review if validation passed
- * @returns {Array<Object>} [.validationData[].data] - Selected reviews for spot checking if validation passed
- * @returns {Array<Object>} .allSpotCheckReviews - Array of selected reviews grouped by miner for spot checking
- * @returns {string|number} .allSpotCheckReviews[].minerUID - The miner's unique identifier
- * @returns {Array<Object>} .allSpotCheckReviews[].reviews - Array of selected reviews for spot checking
+ * @returns {Array<Object>} .validationResults - Array of validation results for each miner
+ * @returns {Array<Object>} .validationResults[].minerUID - The miner's unique identifier
+ * @returns {boolean} .validationResults[].passedValidation - Whether the miner's response passed all validations
+ * @returns {string} [.validationResults[].validationError] - Error message if validation failed
+ * @returns {number} [.validationResults[].count] - Number of valid reviews if validation passed
+ * @returns {Date} [.validationResults[].mostRecentDate] - Date of the most recent review if validation passed
+ * @returns {Array<Object>} [.validationResults[].data] - Selected reviews for spot checking if validation passed
  *
  * @example
  * const responses = [
@@ -133,40 +130,35 @@ const getReviewsForSpotCheck = (reviews, fid, minerUID) => {
  * const fid = 'facility123';
  *
  * const result = prepareResponses(responses, minerUIDs, fid);
- * // Returns {
- * //   validationData: [{
+ * // Returns [{
  * //     minerUID: 'miner1',
  * //     passedValidation: true,
  * //     count: 1,
  * //     mostRecentDate: Date('2024-03-20'),
  * //     data: [...]
- * //   }],
- * //   allSpotCheckReviews: [{
- * //     minerUID: 'miner1',
- * //     reviews: [...]
  * //   }]
- * // }
  */
-const prepareResponses = (responses, minerUIDs, fid) => {
-  const validationData = [];
-  const allSpotCheckReviews = [];
+const prepareResponses = (
+  responses, 
+  minerUIDs, 
+  responseTimes,
+  synapseTimeout,
+  metadata
+) => {
+  // Prepare the validation results
+  const validationResults = prepareValidationResults('Google Maps Reviews', responses, minerUIDs, responseTimes, synapseTimeout);
 
   for (const [index, response] of responses.entries()) {
-    const minerUID = minerUIDs[index] || index;
+    const validationResult = validationResults[index];
 
-    // Check if the response object is valid
-    const { isValid, validationError } = checkResponseValidity(response, minerUID);
-    if (!isValid) {
-      validationData.push({
-        ...generateValidationData({ minerUID }),
-        validationError
-      });
+    // Skip if the response is invalid
+    if (validationResult.validationError) {
       continue;
     }
 
     // Data Cleaning - Remove duplicate reviews by reviewId
     const uniqueReviews = array.uniqueBy(response, 'reviewId');
-    logger.info(`UID ${minerUID}: Data cleaning - ${response.length} reviews -> ${uniqueReviews.length} unique reviews`);
+    logger.info(`Google Maps Reviews - UID ${validationResult.minerUID}: Data cleaning - ${response.length} reviews -> ${uniqueReviews.length} unique reviews`);
 
     // Structural Validation - Check required fields and types
     const requiredFields = [
@@ -180,52 +172,30 @@ const prepareResponses = (responses, minerUIDs, fid) => {
       { name: 'cid', type: 'string' },
       { name: 'fid', type: 'string' },
       { name: 'totalScore', type: 'number' },
-      { name: 'fid', type: 'string', validate: (value) => value === fid }
+      { name: 'fid', type: 'string', validate: (value) => value === metadata.fid }
     ];
 
     // Validate the reviews
     const { valid: validReviews, invalid } = array.validateArray(uniqueReviews, requiredFields);
 
-    // If there are invalid reviews, add them to the miner validation data
+    // If there are invalid reviews, set the validation error and skip
     if (invalid.length > 0) {
-      validationData.push({
-        ...generateValidationData({ minerUID }),
-        validationError: 'Structural validation failed on review objects',
-      });
+      validationResult.validationError = 'Structural validation failed on review objects';
       continue;
     }
 
-    logger.info(`UID ${minerUID}: Structural validation passed - ${validReviews.length} reviews validated successfully`);
+    logger.info(`Google Maps Reviews - UID ${validationResult.minerUID}: Structural validation passed - ${validReviews.length} reviews validated successfully`);
 
-    // Calculate metrics for this miner
-    const count = validReviews.length;
-
-    const { mostRecentDate, selectedReviews } = getReviewsForSpotCheck(validReviews, fid, minerUID);
+    const { mostRecentDate, selectedReviews } = getReviewsForSpotCheck(validReviews, validationResult.minerUID);
 
     // Store validation data and selected reviews for batch processing
-    validationData.push(
-      generateValidationData({
-        minerUID,
-        count,
-        mostRecentDate,
-        data: selectedReviews,
-        passedValidation: true
-      })
-    );
-
-    // Add to batch spot check if we have selected reviews
-    if (selectedReviews.length > 0) {
-      allSpotCheckReviews.push({
-        minerUID,
-        reviews: selectedReviews
-      });
-    }
+    validationResult.count = validReviews.length;
+    validationResult.mostRecentDate = mostRecentDate;
+    validationResult.data = selectedReviews;
+    validationResult.passedValidation = true;
   }
 
-  return {
-    validationData,
-    allSpotCheckReviews
-  }
+  return validationResults
 }
 
 export {

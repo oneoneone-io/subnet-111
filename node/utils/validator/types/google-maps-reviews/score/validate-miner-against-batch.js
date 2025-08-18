@@ -30,7 +30,7 @@ const validateMinerAgainstBatch = (reviews, fid, minerUID, verifiedReviewsMap) =
     const verified = verifiedReviewsMap.get(original.reviewId);
 
     if (!verified) {
-      logger.error(`UID ${minerUID}: Spot check failed: No verified review found for reviewId ${original.reviewId}`);
+      logger.error(`Google Maps Reviews - UID ${minerUID}: Spot check failed: No verified review found for reviewId ${original.reviewId}`);
       return false;
     }
 
@@ -43,7 +43,7 @@ const validateMinerAgainstBatch = (reviews, fid, minerUID, verifiedReviewsMap) =
 
     for (const { field, expected } of stringFieldsToCheck) {
       if (verified[field] !== expected) {
-        logger.error(`UID ${minerUID}: Spot check failed: ${field} mismatch for reviewId ${original.reviewId} - expected ${expected}, got ${verified[field]}`);
+        logger.error(`Google Maps Reviews - UID ${minerUID}: Spot check failed: ${field} mismatch for reviewId ${original.reviewId} - expected ${expected}, got ${verified[field]}`);
         return false;
       }
     }
@@ -53,7 +53,7 @@ const validateMinerAgainstBatch = (reviews, fid, minerUID, verifiedReviewsMap) =
     const verifiedText = normalizeNullableText(verified.text);
 
     if (originalText !== verifiedText) {
-      logger.error(`UID ${minerUID}: Spot check failed: Text mismatch for reviewId ${original.reviewId}`);
+      logger.error(`Google Maps Reviews - UID ${minerUID}: Spot check failed: Text mismatch for reviewId ${original.reviewId}`);
       return false;
     }
 
@@ -65,7 +65,7 @@ const validateMinerAgainstBatch = (reviews, fid, minerUID, verifiedReviewsMap) =
     verifiedDate.setMilliseconds(0); // Truncate milliseconds
 
     if (originalDate.toISOString() !== verifiedDate.toISOString()) {
-      logger.error(`UID ${minerUID}: Spot check failed: Date mismatch for reviewId ${original.reviewId}`);
+      logger.error(`Google Maps Reviews - UID ${minerUID}: Spot check failed: Date mismatch for reviewId ${original.reviewId}`);
       return false;
     }
   }

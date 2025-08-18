@@ -1,4 +1,3 @@
-import config from '#config';
 import responseService from '#modules/response/index.js';
 
 /**
@@ -9,10 +8,7 @@ const output = () => {
   return {
     status: 'healthy',
     node: 'validator',
-    endpoints: ['/create-synthetic-task', '/score-responses', '/health'],
-    config: {
-      google_reviews_synapse_params: config.VALIDATOR.GOOGLE_REVIEWS_SYNAPSE_PARAMS
-    }
+    endpoints: ['/create-synthetic-task', '/score-responses', '/health']
   }
 }
 

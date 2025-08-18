@@ -49,10 +49,24 @@ const COUNTRIES = [
  */
 const getRandomLocation = () => {
   const randomCountry = random.fromArray(COUNTRIES);
+
+  if(!randomCountry){
+    return getRandomLocation();
+  }
+
   const states = State.getStatesOfCountry(randomCountry)
+
+  if(!states){
+    return getRandomLocation();
+  }
+
   const randomState = random.fromArray(states);
   const cities = City.getCitiesOfState(randomCountry, randomState.isoCode);
   const randomCity = random.fromArray(cities);
+  
+  if(!randomCity){
+    return getRandomLocation();
+  }
   const location = `${randomCity.name}, ${randomState.name}`;
   return location;
 }
