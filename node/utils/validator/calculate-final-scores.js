@@ -109,7 +109,7 @@ const calculateFinalScores = (typeName, validationResults, synapseTimeout = 120)
 
   return {
     statistics: {
-      count: scores?.length || 0,
+      count: scores?.length,
       mean: meanScore || 0,
       min: Math.min(...scores) || 0,
       max: Math.max(...scores) || 0
