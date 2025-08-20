@@ -67,11 +67,9 @@ const createSyntheticTask = async () => {
   return {
     dataId: selectedPlace.fid,
     id: selectedPlace.placeId,
-    synapse_params: {
-      language: config.VALIDATOR.GOOGLE_MAPS_REVIEWS.REVIEWS_SYNAPSE_PARAMS.language,
-      sort: config.VALIDATOR.GOOGLE_MAPS_REVIEWS.REVIEWS_SYNAPSE_PARAMS.sort,
-      timeout: config.VALIDATOR.GOOGLE_MAPS_REVIEWS.REVIEWS_SYNAPSE_PARAMS.timeout
-    },
+    language: config.VALIDATOR.GOOGLE_MAPS_REVIEWS.REVIEWS_SYNAPSE_PARAMS.language,
+    sort: config.VALIDATOR.GOOGLE_MAPS_REVIEWS.REVIEWS_SYNAPSE_PARAMS.sort,
+    timeout: config.VALIDATOR.GOOGLE_MAPS_REVIEWS.REVIEWS_SYNAPSE_PARAMS.timeout
   };
 }
 

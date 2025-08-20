@@ -26,7 +26,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-from oneoneone.protocol import GoogleMapsReviewsSynapse
+from oneoneone.protocol import GenericSynapse
 from oneoneone.validator.reward import get_rewards
 from oneoneone.utils.uids import get_random_uids
 from oneoneone.config import (
@@ -61,7 +61,7 @@ async def create_synthetic_task():
     response.raise_for_status()
 
     task_data = response.json()
-    bt.logging.info(f"Synthetic task created - FID: {task_data['task']['dataId']}")
+    bt.logging.info(f"Synthetic task created - Type ID: {task_data['task']['typeId']}")
 
     return task_data["task"]
 
@@ -73,9 +73,9 @@ async def forward(self):
 
     Process:
     1. Select random miners to query
-    2. Create synthetic task with a random Google Maps place
+    2. Create synthetic task with a random type
     3. Query all selected miners simultaneously
-    4. Measure response times and collect results
+    4. Measure response times and collect responses
     5. Score responses based on speed, volume, and recency
     6. Update miner scores in the network
 
@@ -88,24 +88,19 @@ async def forward(self):
     miner_uids = get_random_uids(self, k=MAX_MINER_COUNT)
     bt.logging.debug(f"Selected {len(miner_uids)} miners: {miner_uids}")
 
-    # Create synthetic task with a random Google Maps place
+    # Create synthetic task with a random type
     task = await create_synthetic_task()
-    fid = task["dataId"]  # This is the fid from the Node.js validator    
+
+    # Get the fields
+    type_id = task["typeId"]
+    metadata = task["metadata"]
 
     # Store the miner UIDs for scoring
     self.current_miner_uids = miner_uids
 
-    # Get synapse parameters from validator API response
-    synapse_params = task["synapse_params"]
-    language = synapse_params["language"]  # Fixed to 'en'
-    sort = synapse_params["sort"]  # Fixed to 'newest'
-    timeout = synapse_params["timeout"]  # Get timeout from synapse params
-
     bt.logging.info(f"Querying miners with synthetic task:")
-    bt.logging.info(f"  FID: {fid}")
-    bt.logging.info(
-        f"  Synapse params - language: {language}, sort: {sort}, timeout: {timeout}"
-    )
+    bt.logging.info(f"  Task ID: {type_id}")
+    bt.logging.info(f"  Metadata: {metadata}")
 
     # Debug: Log axon information for transparency
     axons = [self.metagraph.axons[uid] for uid in miner_uids]
@@ -128,11 +123,9 @@ async def forward(self):
             # Query individual miner with synapse
             response = await self.dendrite(
                 axons=[axon],
-                synapse=GoogleMapsReviewsSynapse(
-                    fid=fid,                    
-                    language=language,
-                    sort=sort,
-                    timeout=timeout,
+                synapse=GenericSynapse(
+                    type_id=type_id,
+                    metadata=metadata,
                 ),
                 deserialize=True,
                 timeout=timeout,
@@ -194,7 +187,7 @@ async def forward(self):
 
     # Log the results in detail
     bt.logging.info(
-        f"Query complete - FID: {fid}, Miners queried: {len(miner_uids)}, Total time: {total_query_time:.2f}s"
+        f"Query complete - Type ID: {type_id}, Miners queried: {len(miner_uids)}, Total time: {total_query_time:.2f}s"
     )
 
     # Log detailed response information
@@ -203,17 +196,21 @@ async def forward(self):
     ):
         if response and len(response) > 0:
             bt.logging.info(
-                f"Miner UID {uid} returned {len(response)} reviews in {response_time:.2f}s"
+                f"Miner UID {uid} returned {len(response)} responses in {response_time:.2f}s"
             )
         else:
             bt.logging.warning(
-                f"Miner UID {uid} returned no reviews or failed (time: {response_time:.2f}s)"
+                f"Miner UID {uid} returned no responses or failed (time: {response_time:.2f}s)"
             )
 
     # Score the responses using Node.js validator API (includes timing information)
     bt.logging.info("Scoring responses via Node.js validator endpoint...")
     rewards = get_rewards(
-        self, fid=fid, responses=responses, response_times=self.miner_response_times
+        self,
+        type_id=type_id,
+        metadata=metadata,
+        responses=responses,
+        response_times=self.miner_response_times,
     )
 
     bt.logging.info(

@@ -1,54 +1,73 @@
 import scoreRoute from './score.js';
 import responseService from '#modules/response/index.js';
 import time from '#modules/time/index.js';
-import { prepareResponses } from '#utils/validator/google-maps/score/prepare-responses.js';
-import calculateFinalScores from '#utils/validator/google-maps/score/calculate-final-scores.js';
-import performBatchSpotCheck from '#utils/validator/google-maps/score/perform-batch-spot-check.js';
-import validateMinerAgainstBatch from '#utils/validator/google-maps/score/validate-miner-against-batch.js';
-
-jest.mock('#modules/time/index.js');
-jest.mock('#utils/validator/google-maps/score/prepare-responses.js', () => ({
-  prepareResponses: jest.fn(),
-  getReviewsForSpotCheck: jest.fn(),
-}));
-jest.mock('#utils/validator/google-maps/score/calculate-final-scores.js');
-jest.mock('#utils/validator/google-maps/score/perform-batch-spot-check.js');
-jest.mock('#utils/validator/google-maps/score/validate-miner-against-batch.js');
-jest.mock('#utils/validator/google-maps/score/prepare-and-send-for-digestion.js', () => jest.fn().mockResolvedValue(true))
+import logger from '#modules/logger/index.js';
+import calculateFinalScores from '#utils/validator/calculate-final-scores.js';
+import Types from '#utils/validator/types/index.js';
 
 jest.mock('#modules/response/index.js', () => ({
   success: jest.fn(),
-  internalServerError: jest.fn(),
   badRequest: jest.fn(),
+  internalServerError: jest.fn(),
 }));
+
 jest.mock('#modules/logger/index.js', () => ({
   info: jest.fn(),
   error: jest.fn(),
 }));
 
+jest.mock('#modules/time/index.js', () => ({
+  getCurrentTimestamp: jest.fn(),
+}));
+
+jest.mock('#utils/validator/calculate-final-scores.js', () => jest.fn());
+
+jest.mock('#utils/validator/types/index.js', () => ({
+  getTypeById: jest.fn(),
+}));
+
 describe('routes/validator/score.js', () => {
   let timestamp;
+  let metadata;
+  let selectedType;
 
   beforeEach(() => {
-    jest.resetModules();
-
     timestamp = '2021-01-01T00:00:00.000Z';
     time.getCurrentTimestamp.mockReturnValue(timestamp);
+    metadata = {
+      typeId: 'google-maps-reviews',
+      dataId: '123',
+    };
+    selectedType = {
+      id: 'google-maps-reviews',
+      name: 'Google Maps Reviews',
+      score: jest.fn(),
+      prepareAndSendForDigestion: jest.fn(),
+    };
+
+    // Reset all mocks
+    jest.clearAllMocks();
   });
 
   describe('.output()', () => {
-    test('should output the result properly', () => {
+    test('should output the result properly with empty finalScores', () => {
       const result = scoreRoute.output({
-        fid: "fid",
-        scores: [],
-        minScore: 1,
-        maxScore: 1,
-        meanScore: 1,
+        metadata,
+        typeId: 'google-maps-reviews',
+        typeName: 'Google Maps Reviews',
+        statistics: {
+          count: 0,
+          mean: 1,
+          min: 1,
+          max: 1
+        },
         finalScores: []
       });
       expect(result).toEqual({
         status: 'success',
-        fid: "fid",
+        typeId: 'google-maps-reviews',
+        typeName: 'Google Maps Reviews',
+        metadata,
         scores: [],
         statistics: {
           count: 0,
@@ -61,57 +80,154 @@ describe('routes/validator/score.js', () => {
       });
     });
 
-    test('should output the result properly with fallback values', () => {
+    test('should output the result properly with finalScores data', () => {
+      const finalScores = [
+        { score: 0.8, minerUID: 1, details: 'Good response' },
+        { score: 0.6, minerUID: 2, details: 'Average response' }
+      ];
+
       const result = scoreRoute.output({
-        fid: "fid",
-        finalScores: []
+        metadata,
+        typeId: 'google-maps-reviews',
+        typeName: 'Google Maps Reviews',
+        statistics: {
+          count: 2,
+          mean: 0.7,
+          min: 0.6,
+          max: 0.8
+        },
+        finalScores
       });
+
       expect(result).toEqual({
         status: 'success',
-        fid: "fid",
-        scores: undefined,
+        typeId: 'google-maps-reviews',
+        typeName: 'Google Maps Reviews',
+        metadata,
+        scores: [0.8, 0.6],
         statistics: {
-          count: 0,
-          mean: 0,
-          min: 0,
-          max: 0
+          count: 2,
+          mean: 0.7,
+          min: 0.6,
+          max: 0.8
         },
         timestamp,
-        detailedResults: []
+        detailedResults: finalScores
       });
+    });
+
+    test('should call time.getCurrentTimestamp for timestamp', () => {
+      scoreRoute.output({
+        metadata,
+        typeId: 'test-type',
+        typeName: 'Test Type',
+        statistics: { count: 0, mean: 0, min: 0, max: 0 },
+        finalScores: []
+      });
+
+      expect(time.getCurrentTimestamp).toHaveBeenCalled();
     });
   });
 
   describe('.validate()', () => {
-    test('should fail if fid is not provided', () => {
+    test('should fail if typeId is not provided', () => {
       const { isValid, message } = scoreRoute.validate({});
 
       expect(isValid).toBe(false);
       expect(message.error).toBe('Invalid request');
-      expect(message.message).toBe('fid and responses array are required');
+      expect(message.message).toBe('typeId, metadata, responses array and selectedType are required');
+    });
+
+    test('should fail if metadata is not provided', () => {
+      const { isValid, message } = scoreRoute.validate({
+        typeId: "typeId",
+        responses: [],
+        selectedType
+      });
+
+      expect(isValid).toBe(false);
+      expect(message.error).toBe('Invalid request');
+      expect(message.message).toBe('typeId, metadata, responses array and selectedType are required');
     });
 
     test('should fail if responses is not provided', () => {
-      const { isValid, message } = scoreRoute.validate({ fid: "fid" });
+      const { isValid, message } = scoreRoute.validate({
+        typeId: "typeId",
+        metadata,
+        selectedType
+      });
 
       expect(isValid).toBe(false);
       expect(message.error).toBe('Invalid request');
-      expect(message.message).toBe('fid and responses array are required');
+      expect(message.message).toBe('typeId, metadata, responses array and selectedType are required');
     });
 
     test('should fail if responses is not an array', () => {
-      const { isValid, message } = scoreRoute.validate({ fid: "fid", responses: "not an array" });
+      const { isValid, message } = scoreRoute.validate({
+        typeId: "typeId",
+        metadata,
+        responses: "not an array",
+        selectedType
+      });
 
       expect(isValid).toBe(false);
       expect(message.error).toBe('Invalid request');
-      expect(message.message).toBe('fid and responses array are required');
+      expect(message.message).toBe('typeId, metadata, responses array and selectedType are required');
     });
 
-    test('should pass if responses is an array and if fid exists', () => {
-      const { isValid, message } = scoreRoute.validate({ fid: "fid", responses: [] });
+    test('should fail if selectedType does not exist', () => {
+      const { isValid, message } = scoreRoute.validate({
+        typeId: "typeId",
+        metadata,
+        responses: [],
+        selectedType: undefined
+      });
+
+      expect(isValid).toBe(false);
+      expect(message.error).toBe('Invalid request');
+      expect(message.message).toBe('typeId, metadata, responses array and selectedType are required');
+    });
+
+    test('should fail if selectedType is null', () => {
+      const { isValid, message } = scoreRoute.validate({
+        typeId: "typeId",
+        metadata,
+        responses: [],
+        selectedType: undefined
+      });
+
+      expect(isValid).toBe(false);
+      expect(message.error).toBe('Invalid request');
+      expect(message.message).toBe('typeId, metadata, responses array and selectedType are required');
+    });
+
+    test('should pass validation with all required fields', () => {
+      const { isValid, message } = scoreRoute.validate({
+        typeId: "google-maps-reviews",
+        metadata,
+        responses: [],
+        selectedType
+      });
 
       expect(isValid).toBe(true);
-      expect(message).toEqual({})
+      expect(message).toEqual({});
+    });
+
+    test('should pass validation with valid responses array', () => {
+      const responses = [
+        [{ reviewId: '1', text: 'Great place!' }],
+        [{ reviewId: '2', text: 'Nice service!' }]
+      ];
+
+      const { isValid, message } = scoreRoute.validate({
+        typeId: "google-maps-reviews",
+        metadata,
+        responses,
+        selectedType
+      });
+
+      expect(isValid).toBe(true);
+      expect(message).toEqual({});
     });
   });
 
@@ -126,7 +242,8 @@ describe('routes/validator/score.js', () => {
       };
       request = {
         body: {
-          fid: "fid",
+          typeId: 'google-maps-reviews',
+          metadata,
           responses: [],
           responseTimes: [],
           synapseTimeout: 120,
@@ -134,177 +251,285 @@ describe('routes/validator/score.js', () => {
         }
       };
 
-      prepareResponses.mockReturnValue({
-        validationData: [],
-        allSpotCheckReviews: []
-      });
-
+      Types.getTypeById.mockReturnValue(selectedType);
+      selectedType.score.mockResolvedValue([]);
       calculateFinalScores.mockReturnValue({
-        scores: [],
-        meanScore: 0,
-        minScore: 0,
-        maxScore: 0,
+        statistics: {
+          count: 0,
+          mean: 0,
+          min: 0,
+          max: 0
+        },
         finalScores: []
       });
-
-      performBatchSpotCheck.mockResolvedValue(new Map());
-      validateMinerAgainstBatch.mockReturnValue(true)
     });
 
-    test('should return a badRequest if the request is invalid', async () => {
-      request.body = {}
+    test('should return a badRequest if the request is invalid (missing typeId)', async () => {
+      request.body = { responses: [], metadata };
       await scoreRoute.execute(request, response);
+
       expect(responseService.badRequest).toHaveBeenCalledWith(response, {
         error: 'Invalid request',
-        message: 'fid and responses array are required'
+        message: 'typeId, metadata, responses array and selectedType are required'
       });
     });
 
-    test('should return a internalServerError if the the execution fails', async () => {
-      prepareResponses.mockImplementation(() => {
-        throw new Error('Invalid request');
-      });
+    test('should return a badRequest if typeId is not found', async () => {
+      Types.getTypeById.mockReturnValue();
+
       await scoreRoute.execute(request, response);
+
+      expect(responseService.badRequest).toHaveBeenCalledWith(response, {
+        error: 'Invalid request',
+        message: 'typeId, metadata, responses array and selectedType are required'
+      });
+    });
+
+    test('should return internalServerError if Types.getTypeById throws error', async () => {
+      Types.getTypeById.mockImplementation(() => {
+        throw new Error('Database connection failed');
+      });
+
+      await scoreRoute.execute(request, response);
+
       expect(responseService.internalServerError).toHaveBeenCalledWith(response, {
         error: 'Failed to score responses',
-        message: 'Invalid request',
+        message: 'Database connection failed',
+        timestamp
+      });
+      expect(logger.error).toHaveBeenCalledWith('Error scoring responses:', expect.any(Error));
+    });
+
+    test('should return internalServerError if selectedType.score throws error', async () => {
+      selectedType.score.mockRejectedValue(new Error('Scoring failed'));
+
+      await scoreRoute.execute(request, response);
+
+      expect(responseService.internalServerError).toHaveBeenCalledWith(response, {
+        error: 'Failed to score responses',
+        message: 'Scoring failed',
+        timestamp
+      });
+      expect(logger.error).toHaveBeenCalledWith('Error scoring responses:', expect.any(Error));
+    });
+
+    test('should return internalServerError if calculateFinalScores throws error', async () => {
+      calculateFinalScores.mockImplementation(() => {
+        throw new Error('Calculation failed');
+      });
+
+      await scoreRoute.execute(request, response);
+
+      expect(responseService.internalServerError).toHaveBeenCalledWith(response, {
+        error: 'Failed to score responses',
+        message: 'Calculation failed',
         timestamp
       });
     });
 
-    test('should return a success if the execution succeeds with empty values', async () => {
+    test('should log appropriate information during execution', async () => {
       await scoreRoute.execute(request, response);
-      expect(responseService.success).toHaveBeenCalledWith(response, {
-        status: 'success',
-        fid: "fid",
-        scores: [],
-        statistics: {
-          count: 0,
-          mean: 0,
-          min: 0,
-          max: 0
-        },
-        timestamp,
-        detailedResults: []
-      });
+
+      expect(logger.info).toHaveBeenCalledWith('Google Maps Reviews - Scoring 0 responses.');
+      expect(logger.info).toHaveBeenCalledWith(`Google Maps Reviews - Metadata: ${JSON.stringify(metadata)}`);
+      expect(logger.info).toHaveBeenCalledWith('Google Maps Reviews - Response times provided: No');
+      expect(logger.info).toHaveBeenCalledWith('Google Maps Reviews - Synapse timeout: 120 seconds');
+      expect(logger.info).toHaveBeenCalledWith('Google Maps Reviews - Miner UIDs: []');
     });
 
-    test('should return a success if the execution succeeds', async () => {
+    test('should log response times information when provided', async () => {
       request.body.responseTimes = [100, 200, 300];
-      prepareResponses.mockReturnValue({
-        validationData: [{data: [], minerUID: 1}],
-        allSpotCheckReviews: [1]
-      });
-      calculateFinalScores.mockReturnValue({
-        scores: [],
-        meanScore: 0,
-        minScore: 0,
-        maxScore: 0,
-        finalScores: []
-      });
-      performBatchSpotCheck.mockResolvedValue(new Map());
+
       await scoreRoute.execute(request, response);
+
+      expect(logger.info).toHaveBeenCalledWith('Google Maps Reviews - Response times provided: Yes');
+    });
+
+    test('should log miner UIDs when provided', async () => {
+      request.body.minerUIDs = [1, 2, 3];
+
+      await scoreRoute.execute(request, response);
+
+      expect(logger.info).toHaveBeenCalledWith('Google Maps Reviews - Miner UIDs: [1, 2, 3]');
+    });
+
+    test('should call selectedType.score with correct parameters', async () => {
+      const responses = [[{ id: 1 }], [{ id: 2 }]];
+      const responseTimes = [100, 200];
+      const minerUIDs = [1, 2];
+
+      request.body = {
+        typeId: 'google-maps-reviews',
+        metadata,
+        responses,
+        responseTimes,
+        synapseTimeout: 60,
+        minerUIDs
+      };
+
+      await scoreRoute.execute(request, response);
+
+      expect(selectedType.score).toHaveBeenCalledWith(responses, metadata, responseTimes, 60, minerUIDs);
+    });
+
+    test('should call calculateFinalScores with correct parameters', async () => {
+      const validationResults = [{ score: 0.8 }, { score: 0.6 }];
+      selectedType.score.mockResolvedValue(validationResults);
+
+      await scoreRoute.execute(request, response);
+
+      expect(calculateFinalScores).toHaveBeenCalledWith('Google Maps Reviews', validationResults, 120);
+    });
+
+    test('should call prepareAndSendForDigestion with correct parameters', async () => {
+      const responses = [[{ id: 1 }]];
+      const minerUIDs = [1];
+
+      request.body.responses = responses;
+      request.body.minerUIDs = minerUIDs;
+
+      await scoreRoute.execute(request, response);
+
+      expect(selectedType.prepareAndSendForDigestion).toHaveBeenCalledWith(responses, minerUIDs, metadata);
+    });
+
+    test('should use default values for optional parameters', async () => {
+      request.body = {
+        typeId: 'google-maps-reviews',
+        metadata,
+        responses: []
+      };
+
+      await scoreRoute.execute(request, response);
+
+      expect(selectedType.score).toHaveBeenCalledWith([], metadata, [], 120, []);
+    });
+
+    test('should return success with empty results', async () => {
+      await scoreRoute.execute(request, response);
+
       expect(responseService.success).toHaveBeenCalledWith(response, {
         status: 'success',
-        fid: "fid",
-        scores: [],
+        typeId: 'google-maps-reviews',
+        typeName: 'Google Maps Reviews',
+        metadata,
         statistics: {
           count: 0,
           mean: 0,
           min: 0,
           max: 0
         },
+        scores: [],
         timestamp,
         detailedResults: []
       });
     });
 
-    test('should return empty results if the spot check fails', async () => {
-      prepareResponses.mockReturnValue({
-        validationData: [{data: [1], minerUID: 1}, {data: [], minerUID: 2}],
-        allSpotCheckReviews: [1]
-      });
+    test('should return success with scoring results', async () => {
+      const validationResults = [
+        { minerUID: 1, score: 0.8 },
+        { minerUID: 2, score: 0.6 }
+      ];
+      const finalScores = [
+        { score: 0.8, minerUID: 1 },
+        { score: 0.6, minerUID: 2 }
+      ];
+
+      selectedType.score.mockResolvedValue(validationResults);
       calculateFinalScores.mockReturnValue({
-        scores: [],
-        meanScore: 0,
-        minScore: 0,
-        maxScore: 0,
-        finalScores: []
+        statistics: {
+          count: 2,
+          mean: 0.7,
+          min: 0.6,
+          max: 0.8
+        },
+        finalScores
       });
-      performBatchSpotCheck.mockRejectedValue(new Error('Spot check failed'));
+
       await scoreRoute.execute(request, response);
+
       expect(responseService.success).toHaveBeenCalledWith(response, {
         status: 'success',
-        fid: "fid",
-        scores: [],
+        typeId: 'google-maps-reviews',
+        typeName: 'Google Maps Reviews',
+        metadata,
         statistics: {
-          count: 0,
-          mean: 0,
-          min: 0,
-          max: 0
+          count: 2,
+          mean: 0.7,
+          min: 0.6,
+          max: 0.8
         },
+        scores: [0.8, 0.6],
         timestamp,
-        detailedResults: []
+        detailedResults: finalScores
       });
     });
 
-    test('should return a success if the execution succeeds with spot check', async () => {
-      prepareResponses.mockReturnValue({
-        validationData: [{passedValidation: true, data: [1,2,3], minerUID: 1}],
-        allSpotCheckReviews: [1]
+    test('should return internalServerError if prepareAndSendForDigestion throws error', async () => {
+      selectedType.prepareAndSendForDigestion.mockImplementation(() => {
+        throw new Error('Digestion failed');
       });
-      calculateFinalScores.mockReturnValue({
-        scores: [],
-        meanScore: 0,
-        minScore: 0,
-        maxScore: 0,
-        finalScores: []
-      });
-      performBatchSpotCheck.mockResolvedValue(new Map());
+
       await scoreRoute.execute(request, response);
-      expect(responseService.success).toHaveBeenCalledWith(response, {
-        status: 'success',
-        fid: "fid",
-        scores: [],
-        statistics: {
-          count: 0,
-          mean: 0,
-          min: 0,
-          max: 0
-        },
-        timestamp,
-        detailedResults: []
+
+      expect(responseService.internalServerError).toHaveBeenCalledWith(response, {
+        error: 'Failed to score responses',
+        message: 'Digestion failed',
+        timestamp
       });
+      expect(logger.error).toHaveBeenCalledWith('Error scoring responses:', expect.any(Error));
     });
 
-    test('should return a success if the spot check passes', async () => {
-      prepareResponses.mockReturnValue({
-        validationData: [{passedValidation: true, data: [1,2,3], minerUID: 1}],
-        allSpotCheckReviews: [1]
-      });
+    test('should process complex request with all parameters', async () => {
+      const complexRequest = {
+        body: {
+          typeId: 'google-maps-reviews',
+          metadata: {
+            fid: 'ChIJN1t_t254w4AR4PVM_67p73Y',
+            location: 'San Francisco'
+          },
+          responses: [
+            [{ reviewId: '1', text: 'Great place!' }],
+            [{ reviewId: '2', text: 'Nice service!' }]
+          ],
+          responseTimes: [1.5, 2.8],
+          synapseTimeout: 90,
+          minerUIDs: [5, 10]
+        }
+      };
+
+      const validationResults = [
+        { minerUID: 5, score: 0.9 },
+        { minerUID: 10, score: 0.7 }
+      ];
+
+      selectedType.score.mockResolvedValue(validationResults);
       calculateFinalScores.mockReturnValue({
-        scores: [],
-        meanScore: 0,
-        minScore: 0,
-        maxScore: 0,
-        finalScores: []
+        statistics: { count: 2, mean: 0.8, min: 0.7, max: 0.9 },
+        finalScores: validationResults
       });
-      performBatchSpotCheck.mockResolvedValue(new Map());
-      validateMinerAgainstBatch.mockReturnValue(false);
-      await scoreRoute.execute(request, response);
+
+      await scoreRoute.execute(complexRequest, response);
+
+      expect(selectedType.score).toHaveBeenCalledWith(
+        complexRequest.body.responses,
+        complexRequest.body.metadata,
+        complexRequest.body.responseTimes,
+        complexRequest.body.synapseTimeout,
+        complexRequest.body.minerUIDs
+      );
+
       expect(responseService.success).toHaveBeenCalledWith(response, {
         status: 'success',
-        fid: "fid",
-        scores: [],
-        statistics: {
-          count: 0,
-          mean: 0,
-          min: 0,
-          max: 0
-        },
+        typeId: 'google-maps-reviews',
+        typeName: 'Google Maps Reviews',
+        metadata: complexRequest.body.metadata,
+        statistics: { count: 2, mean: 0.8, min: 0.7, max: 0.9 },
+        scores: [0.9, 0.7],
         timestamp,
-        detailedResults: []
+        detailedResults: validationResults
       });
     });
   });
 });
+

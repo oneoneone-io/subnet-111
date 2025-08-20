@@ -39,7 +39,7 @@ const validate = ({ typeId, metadata, responses, selectedType }) => {
     isValid = false;
     message = {
       error: 'Invalid request',
-      message: 'typeId, metadata and responses array are required'
+      message: 'typeId, metadata, responses array and selectedType are required'
     };
   }
 
@@ -121,7 +121,7 @@ const execute = async(request, response) => {
 
     // Return scoring results with statistics
     const result = output({ metadata, typeId, typeName: selectedType.name, statistics, finalScores });
-    
+
     // Send the data for digestion. Don't wait for it to complete
     selectedType.prepareAndSendForDigestion(responses, minerUIDs, metadata);
 

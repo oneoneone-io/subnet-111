@@ -23,7 +23,6 @@ const output = (fid, count, language, sort, items) => {
       language,
       sort
     },
-    reviewCount: items.length,
     reviews: items,
     timestamp: time.getCurrentTimestamp(),
   }
