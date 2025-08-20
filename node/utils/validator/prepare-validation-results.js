@@ -1,3 +1,5 @@
+import logger from '#modules/logger/index.js';
+
 const baseValidationResult = {
   minerUID: undefined,
   passedValidation: false,
