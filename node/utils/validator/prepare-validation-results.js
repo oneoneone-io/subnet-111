@@ -13,7 +13,6 @@ const baseValidationResult = {
   responseTime: undefined,
 };
 
-
 /**
  * Check the validity of a response
  * @param {Array} response - The response to check
@@ -50,7 +49,6 @@ const createValidationResult = (parameters) => {
   }
 }
 
-
 /**
  * Goes through all responses and creates a validation result for each response
  * @param {Array} responses - The responses to prepare
@@ -62,7 +60,7 @@ const createValidationResult = (parameters) => {
 const prepareValidationResults = (
   typeName,
   responses,
-  minerUIDs, 
+  minerUIDs,
   responseTimes,
   synapseTimeout
 ) => {

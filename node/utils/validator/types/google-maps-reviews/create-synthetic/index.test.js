@@ -1,4 +1,4 @@
-import getEligiblePlace from './get-eligible-place.js';
+import createSyntheticTask from './index.js';
 import random from '#modules/random/index.js';
 import apify from '#modules/apify/index.js';
 import config from '#config';
@@ -18,7 +18,7 @@ jest.mock('#modules/time/index.js', () => ({
 }));
 jest.mock('#utils/validator/get-random-location.js', () => jest.fn());
 
-describe('utils/validator/google-maps/create-synthetic/get-eligible-place.js', () => {
+describe('utils/validator/google-maps-reviews/create-synthetic/index.js', () => {
   let selectedPlace;
   let items;
 
@@ -31,7 +31,7 @@ describe('utils/validator/google-maps/create-synthetic/get-eligible-place.js', (
       type: 'place',
     }
 
-    items = Array.from({ length: config.VALIDATOR.APIFY_SEARCH_MAX_ITEMS }, (_, index) => ({
+    items = Array.from({ length: config.VALIDATOR.GOOGLE_MAPS_REVIEWS.APIFY_SEARCH_MAX_ITEMS }, (_, index) => ({
       fid: `fid-${index}`,
       placeId: `place-id-${index}`,
       title: `title-${index}`,
@@ -51,26 +51,34 @@ describe('utils/validator/google-maps/create-synthetic/get-eligible-place.js', (
     items[1].reviewsCount = undefined;
     apify.runActorAndGetResults.mockResolvedValue(items);
 
-    const result = await getEligiblePlace();
+    const result = await createSyntheticTask();
 
-    expect(apify.runActorAndGetResults).toHaveBeenCalledWith(config.VALIDATOR.APIFY_ACTORS.GOOGLE_MAPS_SEARCH, {
+    expect(apify.runActorAndGetResults).toHaveBeenCalledWith(config.VALIDATOR.GOOGLE_MAPS_REVIEWS.APIFY_ACTORS.SEARCH, {
       searchTerms: ['place in location'],
-      language: config.VALIDATOR.GOOGLE_REVIEWS_SYNAPSE_PARAMS.language,
-      maxItems: config.VALIDATOR.APIFY_SEARCH_MAX_ITEMS
+      language: config.VALIDATOR.GOOGLE_MAPS_REVIEWS.REVIEWS_SYNAPSE_PARAMS.language,
+      maxItems: config.VALIDATOR.GOOGLE_MAPS_REVIEWS.APIFY_SEARCH_MAX_ITEMS
     });
     expect(getRandomLocation).toHaveBeenCalledTimes(1);
-    expect(result).toEqual(selectedPlace);
+    expect(result).toEqual({
+      dataId: selectedPlace.fid,
+      id: selectedPlace.placeId,
+      synapse_params: {
+        language: config.VALIDATOR.GOOGLE_MAPS_REVIEWS.REVIEWS_SYNAPSE_PARAMS.language,
+        sort: config.VALIDATOR.GOOGLE_MAPS_REVIEWS.REVIEWS_SYNAPSE_PARAMS.sort,
+        timeout: config.VALIDATOR.GOOGLE_MAPS_REVIEWS.REVIEWS_SYNAPSE_PARAMS.timeout
+      },
+    });
   });
 
   test('should handle empty results from apify', async () => {
     apify.runActorAndGetResults.mockResolvedValue([]);
 
-    await expect(getEligiblePlace()).rejects.toThrow();
+    await expect(createSyntheticTask()).rejects.toThrow();
   });
 
   test('should handle apify errors', async () => {
     apify.runActorAndGetResults.mockRejectedValue(new Error('Apify error'));
 
-    await expect(getEligiblePlace()).rejects.toThrow('Apify error');
+    await expect(createSyntheticTask()).rejects.toThrow('Apify error');
   });
 });

@@ -21,7 +21,7 @@ const calculateFinalScores = (typeName, validationResults, synapseTimeout = 120)
   // If no valid results, return the scoring results with 0 scores
   if (validResults.length === 0) {
     logger.warning(`${typeName} - No valid results to score`);
-    const finalScores = validationResults.map((validationResult, index) => createEmptyValidationResult({
+    const finalScores = validationResults.map((validationResult) => createEmptyValidationResult({
       minerUID: validationResult.minerUID,
       responseTime: validationResult.responseTime,
       validationError: validationResult.validationError,
@@ -56,7 +56,7 @@ const calculateFinalScores = (typeName, validationResults, synapseTimeout = 120)
 
   logger.info(`${typeName} - Scoring parameters - Tmin: ${Tmin.toFixed(2)}s, Vmax: ${Vmax} reviews, Date range: ${dateRange / (1000 * 60 * 60 * 24)} days`);
 
-  const finalScores = validationResults.map((validationResult, index) => {
+  const finalScores = validationResults.map((validationResult) => {
     // Reject if validation fails or response time >= synapseTimeout
     if (!validationResult.passedValidation || validationResult.responseTime >= synapseTimeout) {
       return createEmptyValidationResult({

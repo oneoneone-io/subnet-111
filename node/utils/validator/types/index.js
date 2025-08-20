@@ -13,7 +13,6 @@ const getTypeById = (id) => {
   return TYPES.find(type => type.id === id);
 }
 
-
 /**
  * Get a random type from the TYPES array
  * @returns {Object} - The random type

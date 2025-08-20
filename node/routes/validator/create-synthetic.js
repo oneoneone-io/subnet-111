@@ -65,11 +65,11 @@ const execute = async (request, response) => {
     return responseService.internalServerError(response, message);
   }
 
-  try {
-    // Get a random type
-    const selectedType = Types.getRandomType();
-    logger.info(`Selected type: ${selectedType.name}`);
+  // Get a random type
+  const selectedType = Types.getRandomType();
+  logger.info(`Selected type: ${selectedType.name}`);
 
+  try {
     // Create the synthetic task metadata
     logger.info(`${selectedType.name} - Starting synthetic task creation.`);
     const metadata = await retryable(selectedType.createSyntheticTask, 10);
@@ -78,10 +78,10 @@ const execute = async (request, response) => {
     logger.info(`${selectedType.name} - Successfully created synthetic task in ${totalDuration.toFixed(2)}s`);
 
     // Return the synthetic task data
-    const syntheticTask = output({ 
-      metadata, 
-      totalDuration, 
-      typeId: selectedType.id, 
+    const syntheticTask = output({
+      metadata,
+      totalDuration,
+      typeId: selectedType.id,
       typeName: selectedType.name
     });
     responseService.success(response, syntheticTask);

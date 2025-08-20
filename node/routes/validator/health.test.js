@@ -1,6 +1,5 @@
 import healthRoute from './health.js';
 import responseService from '#modules/response/index.js';
-import config from '#config';
 
 jest.mock('#modules/response/index.js', () => ({
   success: jest.fn(),
@@ -17,10 +16,7 @@ describe('routes/validator/health.js', () => {
       expect(result).toEqual({
         status: 'healthy',
         node: 'validator',
-        endpoints: ['/create-synthetic-task', '/score-responses', '/health'],
-        config: {
-          google_reviews_synapse_params: config.VALIDATOR.GOOGLE_REVIEWS_SYNAPSE_PARAMS
-        }
+        endpoints: ['/create-synthetic-task', '/score-responses', '/health']
       });
     });
   });
