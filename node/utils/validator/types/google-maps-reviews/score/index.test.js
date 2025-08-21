@@ -48,14 +48,15 @@ describe('#utils/validator/types/google-maps-reviews/score/index.js', () => {
 
       prepareResponses.mockReturnValue(mockValidationResults);
 
-      const result = await score(mockResponses, mockMetadata, mockResponseTimes, mockSynapseTimeout, mockMinerUIDs);
+      const result = await score(mockResponses, mockMetadata, mockResponseTimes, mockSynapseTimeout, mockMinerUIDs, 'google-maps-reviews');
 
       expect(prepareResponses).toHaveBeenCalledWith(
         mockResponses,
         mockMinerUIDs,
         mockResponseTimes,
         mockSynapseTimeout,
-        mockMetadata
+        mockMetadata,
+        'google-maps-reviews'
       );
       expect(performBatchSpotCheck).not.toHaveBeenCalled();
       expect(validateMinerAgainstBatch).not.toHaveBeenCalled();
@@ -396,9 +397,9 @@ describe('#utils/validator/types/google-maps-reviews/score/index.js', () => {
     test('should handle empty responses array', async () => {
       prepareResponses.mockReturnValue([]);
 
-      const result = await score([], mockMetadata, [], mockSynapseTimeout, []);
+      const result = await score([], mockMetadata, [], mockSynapseTimeout, [], 'google-maps-reviews');
 
-      expect(prepareResponses).toHaveBeenCalledWith([], [], [], mockSynapseTimeout, mockMetadata);
+      expect(prepareResponses).toHaveBeenCalledWith([], [], [], mockSynapseTimeout, mockMetadata, 'google-maps-reviews');
       expect(performBatchSpotCheck).not.toHaveBeenCalled();
       expect(validateMinerAgainstBatch).not.toHaveBeenCalled();
       expect(result).toEqual([]);

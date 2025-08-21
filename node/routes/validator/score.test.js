@@ -369,7 +369,7 @@ describe('routes/validator/score.js', () => {
 
       await scoreRoute.execute(request, response);
 
-      expect(selectedType.score).toHaveBeenCalledWith(responses, metadata, responseTimes, 60, minerUIDs);
+      expect(selectedType.score).toHaveBeenCalledWith(responses, metadata, responseTimes, 60, minerUIDs, 'google-maps-reviews');
     });
 
     test('should call calculateFinalScores with correct parameters', async () => {
@@ -402,7 +402,7 @@ describe('routes/validator/score.js', () => {
 
       await scoreRoute.execute(request, response);
 
-      expect(selectedType.score).toHaveBeenCalledWith([], metadata, [], 120, []);
+      expect(selectedType.score).toHaveBeenCalledWith([], metadata, [], 120, [], 'google-maps-reviews');
     });
 
     test('should return success with empty results', async () => {
@@ -485,7 +485,7 @@ describe('routes/validator/score.js', () => {
         body: {
           typeId: 'google-maps-reviews',
           metadata: {
-            fid: 'ChIJN1t_t254w4AR4PVM_67p73Y',
+            fid: '0x89c258f97bdb102b:0xea9f8fc0b3ffff55',
             location: 'San Francisco'
           },
           responses: [
@@ -516,7 +516,8 @@ describe('routes/validator/score.js', () => {
         complexRequest.body.metadata,
         complexRequest.body.responseTimes,
         complexRequest.body.synapseTimeout,
-        complexRequest.body.minerUIDs
+        complexRequest.body.minerUIDs,
+        'google-maps-reviews'
       );
 
       expect(responseService.success).toHaveBeenCalledWith(response, {

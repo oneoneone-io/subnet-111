@@ -139,14 +139,15 @@ const getReviewsForSpotCheck = (reviews, minerUID) => {
  * //   }]
  */
 const prepareResponses = (
-  responses, 
-  minerUIDs, 
+  responses,
+  minerUIDs,
   responseTimes,
   synapseTimeout,
-  metadata
+  metadata,
+  typeId
 ) => {
   // Prepare the validation results
-  const validationResults = prepareValidationResults('Google Maps Reviews', responses, minerUIDs, responseTimes, synapseTimeout);
+  const validationResults = prepareValidationResults(responses, minerUIDs, responseTimes, metadata, typeId);
 
   for (const [index, response] of responses.entries()) {
     const validationResult = validationResults[index];

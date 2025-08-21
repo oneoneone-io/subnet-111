@@ -288,16 +288,16 @@ describe('#utils/validator/google-maps/score/prepare-responses.js', () => {
     test('should handle empty responses array', () => {
       prepareValidationResults.mockReturnValue([]);
 
-      const result = prepareResponses([], [], [], synapseTimeout, metadata);
+      const result = prepareResponses([], [], [], synapseTimeout, metadata, 'google-maps-reviews');
 
       expect(result).toEqual([]);
       expect(prepareValidationResults).toHaveBeenCalledWith(
-        'Google Maps Reviews', [], [], [], synapseTimeout
+        [], [], [], metadata, 'google-maps-reviews'
       );
     });
 
     test('should process valid responses successfully', () => {
-      const result = prepareResponses([validResponse], minerUIDs, responseTimes, synapseTimeout, metadata);
+      const result = prepareResponses([validResponse], minerUIDs, responseTimes, synapseTimeout, metadata, 'google-maps-reviews');
 
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject({
@@ -313,7 +313,7 @@ describe('#utils/validator/google-maps/score/prepare-responses.js', () => {
     test('should skip responses with validation errors', () => {
       mockValidationResults[0].validationError = 'Invalid response format';
 
-      const result = prepareResponses([validResponse], minerUIDs, responseTimes, synapseTimeout, metadata);
+      const result = prepareResponses([validResponse], minerUIDs, responseTimes, synapseTimeout, metadata, 'google-maps-reviews');
 
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject({
@@ -328,7 +328,7 @@ describe('#utils/validator/google-maps/score/prepare-responses.js', () => {
       const duplicateResponse = [...validResponse, ...validResponse];
       array.uniqueBy.mockReturnValue(validResponse);
 
-      const result = prepareResponses([duplicateResponse], minerUIDs, responseTimes, synapseTimeout, metadata);
+      const result = prepareResponses([duplicateResponse], minerUIDs, responseTimes, synapseTimeout, metadata, 'google-maps-reviews');
 
       expect(array.uniqueBy).toHaveBeenCalledWith(duplicateResponse, 'reviewId');
       expect(logger.info).toHaveBeenCalledWith(
@@ -343,7 +343,7 @@ describe('#utils/validator/google-maps/score/prepare-responses.js', () => {
         invalid: [{ isValid: false, item: validResponse[0], validationError: 'Missing required field' }]
       });
 
-      const result = prepareResponses([validResponse], minerUIDs, responseTimes, synapseTimeout, metadata);
+      const result = prepareResponses([validResponse], minerUIDs, responseTimes, synapseTimeout, metadata, 'google-maps-reviews');
 
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject({
@@ -354,7 +354,7 @@ describe('#utils/validator/google-maps/score/prepare-responses.js', () => {
     });
 
     test('should validate required fields and fid matching', () => {
-      prepareResponses([validResponse], minerUIDs, responseTimes, synapseTimeout, metadata);
+      prepareResponses([validResponse], minerUIDs, responseTimes, synapseTimeout, metadata, 'google-maps-reviews');
 
       expect(array.validateArray).toHaveBeenCalledWith(validResponse, [
         { name: 'reviewerId', type: 'string' },
@@ -381,7 +381,7 @@ describe('#utils/validator/google-maps/score/prepare-responses.js', () => {
         invalid: [{ isValid: false, item: response[0], validationError: 'FID mismatch' }]
       });
 
-      const result = prepareResponses([response], minerUIDs, responseTimes, synapseTimeout, metadata);
+      const result = prepareResponses([response], minerUIDs, responseTimes, synapseTimeout, metadata, 'google-maps-reviews');
 
       expect(result[0]).toMatchObject({
         minerUID: 'miner1',
@@ -412,7 +412,7 @@ describe('#utils/validator/google-maps/score/prepare-responses.js', () => {
         return { valid, invalid };
       });
 
-      const result = prepareResponses([reviews], minerUIDs, responseTimes, synapseTimeout, { fid: expectedFid });
+      const result = prepareResponses([reviews], minerUIDs, responseTimes, synapseTimeout, { fid: expectedFid }, 'google-maps-reviews');
 
       // Only the first review should pass validation, but since we have invalid reviews, the whole response fails
       expect(result[0]).toMatchObject({
@@ -445,7 +445,7 @@ describe('#utils/validator/google-maps/score/prepare-responses.js', () => {
     });
 
     test('should log structural validation success', () => {
-      prepareResponses([validResponse], minerUIDs, responseTimes, synapseTimeout, metadata);
+      prepareResponses([validResponse], minerUIDs, responseTimes, synapseTimeout, metadata, 'google-maps-reviews');
 
       expect(logger.info).toHaveBeenCalledWith(
         'Google Maps Reviews - UID miner1: Structural validation passed - 1 reviews validated successfully'
@@ -453,7 +453,7 @@ describe('#utils/validator/google-maps/score/prepare-responses.js', () => {
     });
 
     test('should call getReviewsForSpotCheck with correct parameters', () => {
-      const result = prepareResponses([validResponse], minerUIDs, responseTimes, synapseTimeout, metadata);
+      const result = prepareResponses([validResponse], minerUIDs, responseTimes, synapseTimeout, metadata, 'google-maps-reviews');
 
       // Verify that the spot check function would be called with the valid reviews and miner UID
       expect(result[0].data).toHaveLength(1);
@@ -463,7 +463,7 @@ describe('#utils/validator/google-maps/score/prepare-responses.js', () => {
     test('should handle zero spot check count', () => {
       config.VALIDATOR.SPOT_CHECK_COUNT = 0;
 
-      const result = prepareResponses([validResponse], minerUIDs, responseTimes, synapseTimeout, metadata);
+      const result = prepareResponses([validResponse], minerUIDs, responseTimes, synapseTimeout, metadata, 'google-maps-reviews');
 
       expect(result[0].data).toEqual([]);
       expect(result[0].mostRecentDate).toBeUndefined();
@@ -493,7 +493,7 @@ describe('#utils/validator/google-maps/score/prepare-responses.js', () => {
 
       prepareValidationResults.mockReturnValue(mockValidationResults);
 
-      const result = prepareResponses(responses, minerUIDs, responseTimes, synapseTimeout, metadata);
+      const result = prepareResponses(responses, minerUIDs, responseTimes, synapseTimeout, metadata, 'google-maps-reviews');
 
       expect(result).toHaveLength(2);
       expect(result[0].minerUID).toBe('miner1');
@@ -522,7 +522,7 @@ describe('#utils/validator/google-maps/score/prepare-responses.js', () => {
         .mockReturnValueOnce({ valid: response1, invalid: [] })  // First call succeeds
         .mockReturnValueOnce({ valid: [], invalid: [{ item: response2[0] }] }); // Second call fails
 
-      const result = prepareResponses(responses, minerUIDs, responseTimes, synapseTimeout, metadata);
+      const result = prepareResponses(responses, minerUIDs, responseTimes, synapseTimeout, metadata, 'google-maps-reviews'  );
 
       expect(result).toHaveLength(2);
       expect(result[0].passedValidation).toBe(true);
@@ -533,7 +533,7 @@ describe('#utils/validator/google-maps/score/prepare-responses.js', () => {
     test('should preserve existing validation errors from prepareValidationResults', () => {
       mockValidationResults[0].validationError = 'Response timeout';
 
-      const result = prepareResponses([validResponse], minerUIDs, responseTimes, synapseTimeout, metadata);
+      const result = prepareResponses([validResponse], minerUIDs, responseTimes, synapseTimeout, metadata, 'google-maps-reviews');
 
       expect(result[0].validationError).toBe('Response timeout');
       expect(result[0].passedValidation).toBe(false);
@@ -545,7 +545,7 @@ describe('#utils/validator/google-maps/score/prepare-responses.js', () => {
     test('should handle empty reviews after data cleaning', () => {
       array.uniqueBy.mockReturnValue([]);
 
-      prepareResponses([validResponse], minerUIDs, responseTimes, synapseTimeout, metadata);
+      prepareResponses([validResponse], minerUIDs, responseTimes, synapseTimeout, metadata, 'google-maps-reviews');
 
       expect(logger.info).toHaveBeenCalledWith(
         'Google Maps Reviews - UID miner1: Data cleaning - 1 reviews -> 0 unique reviews'

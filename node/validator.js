@@ -17,7 +17,7 @@ app.use(express.json({ limit: '1gb' }));
 app.use(localhostOnly);
 
 // Create synthetic validation tasks with place data
-app.post('/create-synthetic-task', createSyntheticRoute.execute);
+app.get('/create-synthetic-task', createSyntheticRoute.execute);
 
 // Score miner responses using spot check validation
 app.post('/score-responses', scoreRoute.execute);

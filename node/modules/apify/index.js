@@ -24,14 +24,13 @@ async function runActorAndGetResults(actorId, parameters) {
     token: process.env.APIFY_TOKEN,
   });
 
-  // Run the Google Reviews actor with specified parameters
+  // Run the actor with specified parameters
   const run = await apifyClient.actor(actorId).call(parameters);
 
   // Get the scraped results from Apify dataset
   const { items } = await apifyClient.dataset(run.defaultDatasetId).listItems();
-  
-  // TODO: This prints as [Miner] when validator spot checks, so removed.
-  logger.info(`Successfully fetched ${items.length} reviews`);
+
+  logger.info(`Successfully fetched ${items.length} items`);
 
   return items;
 }

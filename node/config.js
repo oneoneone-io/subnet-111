@@ -48,12 +48,14 @@ export default {
     }
   },
   MINER: {
-    // Miner review count - how many reviews miners should fetch
-    REVIEW_COUNT: 100,
+    GOOGLE_MAPS_REVIEWS: {
+      // Miner review count - how many reviews miners should fetch
+      REVIEW_COUNT: 100,
 
-    // Apify actor names
-    APIFY_ACTORS: {
-      GOOGLE_MAPS_REVIEWS: 'agents/google-maps-reviews'
-    },
+      // Apify actor names
+      APIFY_ACTORS: {
+        GOOGLE_MAPS_REVIEWS: 'agents/google-maps-reviews'
+      },
+    }
   },
 };

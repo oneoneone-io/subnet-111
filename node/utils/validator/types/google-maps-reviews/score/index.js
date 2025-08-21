@@ -12,14 +12,15 @@ import validateMinerAgainstBatch from './validate-miner-against-batch.js';
  * @param {Array} minerUIDs - The miner UIDs
  * @returns {Array} - The validation data
  */
-const score = async (responses, metadata, responseTimes, synapseTimeout, minerUIDs) => {
+const score = async (responses, metadata, responseTimes, synapseTimeout, minerUIDs, typeId) => {
   // Phase 1: Process all responses and collect spot check reviews
   const validationResults = prepareResponses(
-    responses, 
-    minerUIDs, 
+    responses,
+    minerUIDs,
     responseTimes,
     synapseTimeout,
-    metadata
+    metadata,
+    typeId
   );
 
   // Filter the validation results to only include those that have data and passed validation

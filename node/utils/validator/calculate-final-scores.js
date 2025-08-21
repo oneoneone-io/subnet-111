@@ -68,10 +68,10 @@ const calculateFinalScores = (typeName, validationResults, synapseTimeout = 120)
 
     // Speed score (30%) - faster responses get higher scores
      /* istanbul ignore next */
-    const speedScore = validationResult.responseTime > 0 ? Tmin / validationResult.responseTime : 0;
+    let speedScore = validationResult.responseTime > 0 ? Tmin / validationResult.responseTime : 0;
 
     // Volume score (50%) - more reviews get higher scores
-    const volumeScore = Vmax > 0 ? validationResult.count / Vmax : 0;
+    let volumeScore = Vmax > 0 ? validationResult.count / Vmax : 0;
 
     // Recency score (20%) - more recent reviews get higher scores
     let recencyScore = 0;
@@ -84,7 +84,14 @@ const calculateFinalScores = (typeName, validationResults, synapseTimeout = 120)
     }
 
     // Final score is weighted average of all components
-    const finalScore = (0.3 * speedScore) + (0.5 * volumeScore) + (0.2 * recencyScore);
+    let finalScore = (0.3 * speedScore) + (0.5 * volumeScore) + (0.2 * recencyScore);
+
+    // Float the values to remove potential numerical imprecision
+    finalScore = Number.parseFloat(finalScore);
+    speedScore = Number.parseFloat(speedScore);
+    volumeScore = Number.parseFloat(volumeScore);
+    recencyScore = Number.parseFloat(recencyScore);
+    validationResult.responseTime = Number.parseFloat(validationResult.responseTime);
 
     logger.info(`${typeName} - Miner ${validationResult.minerUID} Final Score: ${finalScore.toFixed(4)} - Speed: ${speedScore.toFixed(4)} (${validationResult.responseTime.toFixed(2)}s), Volume: ${volumeScore.toFixed(4)} (${validationResult.count} reviews), Recency: ${recencyScore.toFixed(4)}`);
 

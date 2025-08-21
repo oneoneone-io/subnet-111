@@ -64,11 +64,15 @@ const createSyntheticTask = async () => {
   logger.info(`Google Maps Reviews -   - Review Count: ${selectedPlace.reviewCount}`);
 
   // Return the synthetic task metadata
-  return {
+  const metadata = {
     dataId: selectedPlace.fid,
     id: selectedPlace.placeId,
     language: config.VALIDATOR.GOOGLE_MAPS_REVIEWS.REVIEWS_SYNAPSE_PARAMS.language,
     sort: config.VALIDATOR.GOOGLE_MAPS_REVIEWS.REVIEWS_SYNAPSE_PARAMS.sort,
+  }
+
+  return {
+    metadata,
     timeout: config.VALIDATOR.GOOGLE_MAPS_REVIEWS.REVIEWS_SYNAPSE_PARAMS.timeout
   };
 }

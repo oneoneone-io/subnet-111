@@ -47,7 +47,7 @@ async def create_synthetic_task():
     Generates a random Google Maps place for testing miners.
 
     Returns:
-        dict: Task data including fid and synapse parameters
+        dict: Task data including dataId and synapse parameters
 
     Raises:
         Exception: If synthetic task creation fails
@@ -57,11 +57,11 @@ async def create_synthetic_task():
     )
     bt.logging.info(f"Creating synthetic task via: {validator_url}")
 
-    response = requests.post(validator_url, timeout=VALIDATOR_API_TIMEOUT)
+    response = requests.get(validator_url, timeout=VALIDATOR_API_TIMEOUT)
     response.raise_for_status()
 
     task_data = response.json()
-    bt.logging.info(f"Synthetic task created - Type ID: {task_data['task']['typeId']}")
+    bt.logging.info(f"Synthetic task created - Type ID: {task_data['task']['typeId']} with metadata: {task_data['task']['metadata']}")
 
     return task_data["task"]
 
@@ -94,13 +94,12 @@ async def forward(self):
     # Get the fields
     type_id = task["typeId"]
     metadata = task["metadata"]
+    timeout = task["timeout"]
 
     # Store the miner UIDs for scoring
     self.current_miner_uids = miner_uids
 
-    bt.logging.info(f"Querying miners with synthetic task:")
-    bt.logging.info(f"  Task ID: {type_id}")
-    bt.logging.info(f"  Metadata: {metadata}")
+    bt.logging.info(f"Querying miners with synthetic task: type_id={type_id}, metadata={metadata}")
 
     # Debug: Log axon information for transparency
     axons = [self.metagraph.axons[uid] for uid in miner_uids]
@@ -126,6 +125,7 @@ async def forward(self):
                 synapse=GenericSynapse(
                     type_id=type_id,
                     metadata=metadata,
+                    timeout=timeout,
                 ),
                 deserialize=True,
                 timeout=timeout,

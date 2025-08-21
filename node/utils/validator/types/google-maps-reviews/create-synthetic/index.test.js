@@ -60,10 +60,12 @@ describe('utils/validator/google-maps-reviews/create-synthetic/index.js', () => 
     });
     expect(getRandomLocation).toHaveBeenCalledTimes(1);
     expect(result).toEqual({
-      dataId: selectedPlace.fid,
-      id: selectedPlace.placeId,
-      language: config.VALIDATOR.GOOGLE_MAPS_REVIEWS.REVIEWS_SYNAPSE_PARAMS.language,
-      sort: config.VALIDATOR.GOOGLE_MAPS_REVIEWS.REVIEWS_SYNAPSE_PARAMS.sort,
+      metadata: {
+        dataId: selectedPlace.fid,
+        id: selectedPlace.placeId,
+        language: config.VALIDATOR.GOOGLE_MAPS_REVIEWS.REVIEWS_SYNAPSE_PARAMS.language,
+        sort: config.VALIDATOR.GOOGLE_MAPS_REVIEWS.REVIEWS_SYNAPSE_PARAMS.sort,
+      },
       timeout: config.VALIDATOR.GOOGLE_MAPS_REVIEWS.REVIEWS_SYNAPSE_PARAMS.timeout
     });
   });

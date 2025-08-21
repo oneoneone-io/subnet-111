@@ -30,6 +30,7 @@ describe('routes/validator/create-synthetic.js', () => {
   let request;
   let response;
   let metadata;
+  let timeout;
 
   beforeEach(() => {
     timestamp = '2021-01-01T00:00:00.000Z';
@@ -48,7 +49,7 @@ describe('routes/validator/create-synthetic.js', () => {
       id: 'selected-id',
     }
 
-    retryable.mockImplementation(() => metadata);
+    retryable.mockImplementation(() => ({ metadata, timeout }));
   });
 
   describe('.output()', () => {
@@ -58,6 +59,7 @@ describe('routes/validator/create-synthetic.js', () => {
         typeName: 'Google Maps Reviews',
         metadata,
         totalDuration: 100,
+        timeout,
       });
       expect(result).toEqual({
         status: 'success',
@@ -66,8 +68,9 @@ describe('routes/validator/create-synthetic.js', () => {
           typeName: 'Google Maps Reviews',
           metadata,
           timestamp,
-          totalTime: 100
-        }
+          totalTime: 100,
+          timeout,
+        },
       });
     });
   });
@@ -112,9 +115,10 @@ describe('routes/validator/create-synthetic.js', () => {
           typeId: 'google-maps-reviews',
           typeName: 'Google Maps Reviews',
           metadata,
+          timeout,
           timestamp,
-          totalTime: 0
-        }
+          totalTime: 0,
+        },
       });
     });
 
@@ -129,7 +133,7 @@ describe('routes/validator/create-synthetic.js', () => {
         error: 'Failed to create synthetic task',
         message: 'Failed to get eligible place',
         totalTime: 0,
-        timestamp
+        timestamp,
       });
     });
   });

@@ -9,7 +9,7 @@ import Types from '#utils/validator/types/index.js';
  * @param {Object} param0 - The parameters
  * @returns {Object} - The output
  */
-const output = ({ metadata, totalDuration, typeId, typeName }) => {
+const output = ({ metadata, timeout, totalDuration, typeId, typeName }) => {
   return {
     status: 'success',
     task: {
@@ -17,8 +17,9 @@ const output = ({ metadata, totalDuration, typeId, typeName }) => {
       typeName,
       metadata,
       timestamp: time.getCurrentTimestamp(),
-      totalTime: totalDuration
-    }
+      totalTime: totalDuration,
+      timeout,
+    },
   }
 }
 
@@ -49,7 +50,7 @@ const validate = () => {
 /**
  * Create Synthetic Task Route
  * This route is used to create a synthetic task for a given place.
- * It returns the place FID and synapse parameters for miners to fetch reviews.
+ * It returns the typeId and synapse parameters for miners to fetch responses.
  * @example
  * GET /validator/create-synthetic
  * @param {import('express').Request} request - The request object
@@ -72,7 +73,7 @@ const execute = async (request, response) => {
   try {
     // Create the synthetic task metadata
     logger.info(`${selectedType.name} - Starting synthetic task creation.`);
-    const metadata = await retryable(selectedType.createSyntheticTask, 10);
+    const { metadata, timeout } = await retryable(selectedType.createSyntheticTask, 10);
 
     const totalDuration = time.getDuration(startTime);
     logger.info(`${selectedType.name} - Successfully created synthetic task in ${totalDuration.toFixed(2)}s`);
@@ -80,6 +81,7 @@ const execute = async (request, response) => {
     // Return the synthetic task data
     const syntheticTask = output({
       metadata,
+      timeout,
       totalDuration,
       typeId: selectedType.id,
       typeName: selectedType.name

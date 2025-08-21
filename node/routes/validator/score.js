@@ -59,7 +59,7 @@ const validate = ({ typeId, metadata, responses, selectedType }) => {
  * {
  *   "typeId": "google-maps-reviews",
  *   "metadata": {
- *     "fid": "ChIJN1t_t254w4AR4PVM_67p73Y",
+ *     "dataId": "0x89c258f97bdb102b:0xea9f8fc0b3ffff55",
  *   },
  *   "responses": [
  *     [
@@ -72,7 +72,7 @@ const validate = ({ typeId, metadata, responses, selectedType }) => {
  *         "publishedAtDate": "2025-01-01T12:00:00.000Z",
  *         "placeId": "ChIJN1t_t254w4AR4PVM_67p73Y",
  *         "cid": "1234567890",
- *         "fid": "ChIJN1t_t254w4AR4PVM_67p73Y",
+ *         "fid": "0x89c258f97bdb102b:0xea9f8fc0b3ffff55",
  *         "totalScore": 5
  *       }
  *     ]
@@ -114,7 +114,7 @@ const execute = async(request, response) => {
     logger.info(`${selectedType.name} - Miner UIDs: [${minerUIDs.join(', ')}]`);
 
     // Score the responses
-    const validationResults = await selectedType.score(responses, metadata, responseTimes, synapseTimeout, minerUIDs);
+    const validationResults = await selectedType.score(responses, metadata, responseTimes, synapseTimeout, minerUIDs, typeId);
 
     // Create final scores and statistics
     const { statistics, finalScores } = calculateFinalScores(selectedType.name, validationResults, synapseTimeout);

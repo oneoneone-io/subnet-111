@@ -36,7 +36,7 @@ const prepareAndSendForDigestion = async (responses, minerUIDs, metadata) => {
             logger.info(`Google Maps Reviews - UID ${minerUID}: Sent for digestion successfully`);
         }
     }
-    
+
 }
 
 export default prepareAndSendForDigestion

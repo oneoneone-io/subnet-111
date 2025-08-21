@@ -40,6 +40,7 @@ class GenericSynapse(bt.Synapse):
     # Required request inputs (set by validator)
     type_id: str
     metadata: Dict[str, typing.Any]
+    timeout: int
 
     # Response output (filled by miner)
     responses: Optional[List[Dict[str, typing.Any]]] = None

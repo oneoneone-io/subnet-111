@@ -52,54 +52,53 @@ class Miner(BaseMinerNeuron):
         bt.logging.info(f"Local API URL: {self.local_api_url}")
 
     async def forward(
-        self, synapse: oneoneone.protocol.GoogleMapsReviewsSynapse
-    ) -> oneoneone.protocol.GoogleMapsReviewsSynapse:
+        self, synapse: oneoneone.protocol.GenericSynapse
+    ) -> oneoneone.protocol.GenericSynapse:
         """
-        Process incoming Google Maps reviews requests from validators.
-        Forwards the request to local Node.js API and returns the reviews data.
+        Process incoming requests from validators.
+        Forwards the request to local Node.js API and returns the responses data.
 
         Args:
             synapse: The synapse object containing the request details
 
         Returns:
-            The synapse object with reviews data filled in
+            The synapse object with responses data filled in
         """
         bt.logging.debug(
-            f"Received request - fid: {synapse.fid}, language: {synapse.language}, sort: {synapse.sort}, timeout: {synapse.timeout}"
+            f"Received request - type_id: {synapse.type_id}, metadata: {synapse.metadata}, timeout: {synapse.timeout}"
         )
 
         try:
-            # Call local Node.js API using fid endpoint
-            url = f"{self.local_api_url}/google-maps/reviews/{synapse.fid}"
-            params = {
-                # Count is fixed at 200 in the Node.js layer
-                "language": synapse.language,
-                "sort": synapse.sort,
+            # Call local Node.js API using typeId endpoint
+            url = f"{self.local_api_url}/fetch"
+            body = {
+                "typeId": synapse.type_id,
+                "metadata": synapse.metadata,
                 "timeout": synapse.timeout,  # Pass timeout to Node.js miner
             }
 
             # Make async HTTP request with timeout from synapse
             async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    url, params=params, timeout=synapse.timeout
+                async with session.post(
+                    url, json=body, timeout=synapse.timeout
                 ) as response:
                     if response.status == 200:
                         data = await response.json()
-                        synapse.reviews = data.get("reviews", [])
+                        synapse.responses = data.get("responses", [])
                         bt.logging.info(
-                            f"Successfully fetched {len(synapse.reviews)} reviews for fid: {synapse.fid}"
+                            f"Successfully fetched {len(synapse.responses)} responses for type_id: {synapse.type_id}"
                         )
                     else:
                         error_text = await response.text()
                         bt.logging.error(f"API error {response.status}: {error_text}")
-                        synapse.reviews = []
+                        synapse.responses = []
 
         except asyncio.TimeoutError:
-            bt.logging.error(f"Timeout calling local API for fid: {synapse.fid}")
-            synapse.reviews = []
+            bt.logging.error(f"Timeout calling local API for type_id: {synapse.type_id}")
+            synapse.responses = []
         except Exception as e:
             bt.logging.error(f"Error calling local API: {str(e)}")
-            synapse.reviews = []
+            synapse.responses = []
 
         return synapse
 
