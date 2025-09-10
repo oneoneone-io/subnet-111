@@ -16,7 +16,7 @@ tests/
 ## Test Types
 
 ### Unit Tests (`test_protocol.py`)
-- Tests the `GoogleMapsReviewsSynapse` class in isolation
+- Tests the `GenericSynapse` class in isolation
 - Validates synapse creation, serialization, and deserialization
 - Tests various parameter combinations
 - No external dependencies required
@@ -155,7 +155,7 @@ Overall: ✅ ALL PASSED
 ## Adding New Tests
 
 ### Adding Unit Tests
-1. Add new test methods to `TestGoogleMapsReviewsSynapse` class
+1. Add new test methods to `TestGenericSynapse` class
 2. Follow naming convention: `test_<functionality>`
 3. Use `self.assertEqual()`, `self.assertTrue()`, etc. for assertions
 
@@ -175,4 +175,4 @@ Overall: ✅ ALL PASSED
 - Ensure Node.js miner is running: `cd node/miner && npm start`
 - Check APIFY_TOKEN is set in `node/miner/.env`
 - Verify port 3001 is not blocked by firewall
-- Check internet connectivity for Apify API calls 
+- Check internet connectivity for Apify API calls

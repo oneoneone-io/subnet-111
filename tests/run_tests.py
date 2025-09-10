@@ -13,7 +13,7 @@ import argparse
 # Add the parent directory to the path so we can import oneoneone
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from test_protocol import TestGoogleMapsReviewsSynapse
+from test_protocol import TestGenericSynapse
 from test_integration import TestIntegration
 
 
@@ -26,7 +26,7 @@ def run_unit_tests():
     suite = unittest.TestSuite()
 
     # Add test cases
-    suite.addTests(loader.loadTestsFromTestCase(TestGoogleMapsReviewsSynapse))
+    suite.addTests(loader.loadTestsFromTestCase(TestGenericSynapse))
 
     # Run tests
     runner = unittest.TextTestRunner(verbosity=2)

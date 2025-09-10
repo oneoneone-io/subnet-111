@@ -103,7 +103,7 @@ class Miner(BaseMinerNeuron):
         return synapse
 
     async def blacklist(
-        self, synapse: oneoneone.protocol.GoogleMapsReviewsSynapse
+        self, synapse: oneoneone.protocol.GenericSynapse
     ) -> typing.Tuple[bool, str]:
         """
         Determines whether an incoming request should be blacklisted.
@@ -154,7 +154,7 @@ class Miner(BaseMinerNeuron):
         return False, "Hotkey recognized!"
 
     async def priority(
-        self, synapse: oneoneone.protocol.GoogleMapsReviewsSynapse
+        self, synapse: oneoneone.protocol.GenericSynapse
     ) -> float:
         """
         Determines the priority of incoming requests based on stake.

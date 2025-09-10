@@ -36,7 +36,7 @@ const score = async (responses, metadata, responseTimes, synapseTimeout, minerUI
   let verifiedReviewsMap = new Map();
   if (selectedSpotCheckReviews.length > 0) {
     try {
-      verifiedReviewsMap = await performBatchSpotCheck(selectedSpotCheckReviews, metadata.fid);
+      verifiedReviewsMap = await performBatchSpotCheck(selectedSpotCheckReviews, metadata.dataId);
     } catch (error) {
       logger.error('Google Maps Reviews - Batch spot check failed:', error);
       // If batch spot check fails, fail all miners that needed spot checking
@@ -54,7 +54,7 @@ const score = async (responses, metadata, responseTimes, synapseTimeout, minerUI
     if (validationResult.data.length > 0 && validationResult.passedValidation) {
       const spotCheckPassed = validateMinerAgainstBatch(
         validationResult.data,
-        metadata.fid,
+        metadata.dataId,
         validationResult.minerUID,
         verifiedReviewsMap
       );

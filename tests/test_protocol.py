@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Unit tests for the oneoneone protocol module.
-Tests the GoogleMapsReviewsSynapse class functionality.
+Tests the GenericSynapse class functionality.
 """
 
 import sys
@@ -11,11 +11,11 @@ import unittest
 # Add the parent directory to the path so we can import oneoneone
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from oneoneone.protocol import GoogleMapsReviewsSynapse
+from oneoneone.protocol import GenericSynapse
 
 
-class TestGoogleMapsReviewsSynapse(unittest.TestCase):
-    """Test cases for GoogleMapsReviewsSynapse"""
+class TestGenericSynapse(unittest.TestCase):
+    """Test cases for GenericSynapse"""
 
     def setUp(self):
         """Set up test fixtures"""
@@ -31,7 +31,7 @@ class TestGoogleMapsReviewsSynapse(unittest.TestCase):
 
     def test_synapse_creation(self):
         """Test basic synapse creation"""
-        synapse = GoogleMapsReviewsSynapse(fid=self.test_fid)
+        synapse = GenericSynapse(fid=self.test_fid)
 
         self.assertEqual(synapse.fid, self.test_fid)
         self.assertEqual(synapse.language, "en")
@@ -40,7 +40,7 @@ class TestGoogleMapsReviewsSynapse(unittest.TestCase):
 
     def test_synapse_with_custom_params(self):
         """Test synapse creation with custom parameters"""
-        synapse = GoogleMapsReviewsSynapse(
+        synapse = GenericSynapse(
             fid=self.test_fid,
             language="es",
             sort="relevant",
@@ -52,7 +52,7 @@ class TestGoogleMapsReviewsSynapse(unittest.TestCase):
 
     def test_synapse_serialization(self):
         """Test synapse serialization"""
-        synapse = GoogleMapsReviewsSynapse(fid=self.test_fid)
+        synapse = GenericSynapse(fid=self.test_fid)
         synapse.reviews = self.test_reviews
 
         # Test that the synapse can be serialized
@@ -62,7 +62,7 @@ class TestGoogleMapsReviewsSynapse(unittest.TestCase):
 
     def test_synapse_deserialization(self):
         """Test synapse deserialization"""
-        synapse = GoogleMapsReviewsSynapse(fid=self.test_fid)
+        synapse = GenericSynapse(fid=self.test_fid)
         synapse.reviews = self.test_reviews
 
         # Test deserialization
@@ -71,7 +71,7 @@ class TestGoogleMapsReviewsSynapse(unittest.TestCase):
 
     def test_synapse_empty_reviews(self):
         """Test synapse with empty reviews"""
-        synapse = GoogleMapsReviewsSynapse(fid=self.test_fid)
+        synapse = GenericSynapse(fid=self.test_fid)
 
         # Test deserialization with no reviews
         deserialized = synapse.deserialize()
@@ -80,7 +80,7 @@ class TestGoogleMapsReviewsSynapse(unittest.TestCase):
     def test_synapse_validation(self):
         """Test synapse field validation"""
         # Test with valid parameters
-        synapse = GoogleMapsReviewsSynapse(
+        synapse = GenericSynapse(
             fid=self.test_fid, language="fr", sort="highest"
         )
 
@@ -90,16 +90,16 @@ class TestGoogleMapsReviewsSynapse(unittest.TestCase):
     def test_synapse_edge_cases(self):
         """Test synapse edge cases"""
         # Test with different language codes
-        synapse = GoogleMapsReviewsSynapse(fid=self.test_fid, language="de")
+        synapse = GenericSynapse(fid=self.test_fid, language="de")
         self.assertEqual(synapse.language, "de")
 
         # Test with different sort options
-        synapse = GoogleMapsReviewsSynapse(fid=self.test_fid, sort="lowest")
+        synapse = GenericSynapse(fid=self.test_fid, sort="lowest")
         self.assertEqual(synapse.sort, "lowest")
 
     def test_synapse_string_representation(self):
         """Test synapse string representation"""
-        synapse = GoogleMapsReviewsSynapse(fid=self.test_fid)
+        synapse = GenericSynapse(fid=self.test_fid)
         str_repr = str(synapse)
 
         # Should contain the fid in string representation
@@ -107,7 +107,7 @@ class TestGoogleMapsReviewsSynapse(unittest.TestCase):
 
     def test_synapse_defaults(self):
         """Test synapse default values"""
-        synapse = GoogleMapsReviewsSynapse(fid="test_fid")
+        synapse = GenericSynapse(fid="test_fid")
 
         self.assertEqual(synapse.fid, "test_fid")
         self.assertEqual(synapse.language, "en")
@@ -116,7 +116,7 @@ class TestGoogleMapsReviewsSynapse(unittest.TestCase):
 
     def test_synapse_custom_values(self):
         """Test synapse with custom values"""
-        synapse = GoogleMapsReviewsSynapse(
+        synapse = GenericSynapse(
             fid="custom_fid", language="es", sort="highest"
         )
 

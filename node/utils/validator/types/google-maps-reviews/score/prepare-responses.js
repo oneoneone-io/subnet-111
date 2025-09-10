@@ -173,7 +173,7 @@ const prepareResponses = (
       { name: 'cid', type: 'string' },
       { name: 'fid', type: 'string' },
       { name: 'totalScore', type: 'number' },
-      { name: 'fid', type: 'string', validate: (value) => value === metadata.fid }
+      { name: 'fid', type: 'string', validate: (value) => value === metadata.dataId }
     ];
 
     // Validate the reviews

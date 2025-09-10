@@ -3,7 +3,6 @@ import array from '#modules/array/index.js';
 import logger from '#modules/logger/index.js';
 
 const prepareAndSendForDigestion = async (responses, minerUIDs, metadata) => {
-    const { fid } = metadata;
     for(const [index, response] of responses.entries()){
         const minerUID = minerUIDs[index] || index;
 
@@ -23,7 +22,7 @@ const prepareAndSendForDigestion = async (responses, minerUIDs, metadata) => {
             { name: 'cid', type: 'string' },
             { name: 'fid', type: 'string' },
             { name: 'totalScore', type: 'number' },
-            { name: 'fid', type: 'string', validate: (value) => value === fid }
+            { name: 'fid', type: 'string', validate: (value) => value === metadata.dataId }
         ];
 
         // Validate the reviews
