@@ -15,7 +15,9 @@ import { createEmptyValidationResult } from '#utils/validator/validation-result.
 const calculateFinalScores = (typeName, validationResults, synapseTimeout = 120) => {
   // Calculate minimums and maximums for normalization
   const validResults = validationResults.filter(validationResult =>
-    validationResult.passedValidation && validationResult.responseTime < synapseTimeout
+    validationResult.passedValidation
+    && validationResult.responseTime < synapseTimeout
+    && validationResult.count > 0
   );
 
   // If no valid results, return the scoring results with 0 scores
@@ -68,7 +70,7 @@ const calculateFinalScores = (typeName, validationResults, synapseTimeout = 120)
 
     // Speed score (30%) - faster responses get higher scores
      /* istanbul ignore next */
-    let speedScore = validationResult.responseTime > 0 ? Tmin / validationResult.responseTime : 0;
+    let speedScore = (validationResult.responseTime > 0 && validationResult.count > 0) ? Tmin / validationResult.responseTime : 0;
 
     // Volume score (50%) - more reviews get higher scores
     let volumeScore = Vmax > 0 ? validationResult.count / Vmax : 0;
