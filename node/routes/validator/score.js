@@ -1,28 +1,22 @@
 import responseService from '#modules/response/index.js';
 import time from '#modules/time/index.js';
 import logger from '#modules/logger/index.js';
-import performBatchSpotCheck from '#utils/validator/google-maps/score/perform-batch-spot-check.js';
-import validateMinerAgainstBatch from '#utils/validator/google-maps/score/validate-miner-against-batch.js';
-import calculateFinalScores from '#utils/validator/google-maps/score/calculate-final-scores.js';
-import { prepareResponses } from '#utils/validator/google-maps/score/prepare-responses.js';
-import prepareAndSendForDigestion from '#utils/validator/google-maps/score/prepare-and-send-for-digestion.js';
+import calculateFinalScores from '#utils/validator/calculate-final-scores.js';
+import Types from '#utils/validator/types/index.js';
 
 /**
  * Output the result of the score route
  * @param {Object} param0 - The parameters
  * @returns {Object} - The output
  */
-const output = ({ fid, scores, minScore, maxScore, meanScore, finalScores }) => {
+const output = ({ metadata, typeId, typeName, statistics, finalScores }) => {
   return {
     status: 'success',
-    fid,
-    scores,
-    statistics: {
-      count: scores?.length || 0,
-      mean: meanScore || 0,
-      min: minScore || 0,
-      max: maxScore || 0
-    },
+    typeId,
+    typeName,
+    metadata,
+    statistics,
+    scores: finalScores.map(result => result.score),
     timestamp: time.getCurrentTimestamp(),
     detailedResults: finalScores
   }
@@ -30,21 +24,22 @@ const output = ({ fid, scores, minScore, maxScore, meanScore, finalScores }) => 
 
 /**
  * Validate the request
- * Validate if fid exist
+ * Validate if typeId exist
+ * Validate if metadata exist
  * Validate if responses is an array
  * Validate if responses is not empty
  * @param {Object} param0 - The parameters
  * @returns {Object} - The output
  */
-const validate = ({ fid, responses }) => {
+const validate = ({ typeId, metadata, responses, selectedType }) => {
   let isValid = true
   let message = {};
    // Validate required parameters
-   if (!fid || !responses || !Array.isArray(responses)) {
+   if (!typeId || !metadata || !responses || !Array.isArray(responses) || !selectedType) {
     isValid = false;
     message = {
       error: 'Invalid request',
-      message: 'fid and responses array are required'
+      message: 'typeId, metadata, responses array and selectedType are required'
     };
   }
 
@@ -56,13 +51,16 @@ const validate = ({ fid, responses }) => {
 
 /**
  * Score Route
- * This route is used to score the responses for a given fid.
+ * This route is used to score the responses for a type
  * It returns a structured response with the scores and metadata.
  *
  * @example
  * POST /score-responses
  * {
- *   "fid": "ChIJN1t_t254w4AR4PVM_67p73Y",
+ *   "typeId": "google-maps-reviews",
+ *   "metadata": {
+ *     "dataId": "0x89c258f97bdb102b:0xea9f8fc0b3ffff55",
+ *   },
  *   "responses": [
  *     [
  *       {
@@ -74,7 +72,7 @@ const validate = ({ fid, responses }) => {
  *         "publishedAtDate": "2025-01-01T12:00:00.000Z",
  *         "placeId": "ChIJN1t_t254w4AR4PVM_67p73Y",
  *         "cid": "1234567890",
- *         "fid": "ChIJN1t_t254w4AR4PVM_67p73Y",
+ *         "fid": "0x89c258f97bdb102b:0xea9f8fc0b3ffff55",
  *         "totalScore": 5
  *       }
  *     ]
@@ -91,75 +89,41 @@ const validate = ({ fid, responses }) => {
 const execute = async(request, response) => {
   try {
     const {
-      fid,
+      typeId,
+      metadata,
       responses,
       responseTimes = [],
       synapseTimeout = 120,
       minerUIDs = []
     } = request.body;
 
+    // Get the type
+    const selectedType = Types.getTypeById(typeId);
+
     // Validate the request
-    const { isValid, message } = validate({ fid, responses });
+    const { isValid, message } = validate({ typeId, metadata, responses, selectedType });
     if (!isValid) {
       return responseService.badRequest(response, message);
     }
 
     // Log the request and important information
-    logger.info(`Scoring ${responses.length} responses for fid: ${fid}`);
-    logger.info(`Response times provided: ${responseTimes.length > 0 ? 'Yes' : 'No'}`);
-    logger.info(`Synapse timeout: ${synapseTimeout} seconds`);
-    logger.info(`Miner UIDs: [${minerUIDs.join(', ')}]`);
+    logger.info(`${selectedType.name} - Scoring ${responses.length} responses.`);
+    logger.info(`${selectedType.name} - Metadata: ${JSON.stringify(metadata)}`);
+    logger.info(`${selectedType.name} - Response times provided: ${responseTimes.length > 0 ? 'Yes' : 'No'}`);
+    logger.info(`${selectedType.name} - Synapse timeout: ${synapseTimeout} seconds`);
+    logger.info(`${selectedType.name} - Miner UIDs: [${minerUIDs.join(', ')}]`);
 
-    // Phase 1: Process all responses and collect spot check reviews
-    const { validationData, allSpotCheckReviews } = prepareResponses(responses, minerUIDs, fid);
+    // Score the responses
+    const validationResults = await selectedType.score(responses, metadata, responseTimes, synapseTimeout, minerUIDs, typeId);
 
-    // Phase 2: Batch spot check if we have any reviews to check
-    let verifiedReviewsMap = new Map();
-    if (allSpotCheckReviews.length > 0) {
-      try {
-        verifiedReviewsMap = await performBatchSpotCheck(allSpotCheckReviews, fid);
-      } catch (error) {
-        logger.error('Batch spot check failed:', error);
-        // If batch spot check fails, fail all miners that needed spot checking
-        for (const minerData of validationData) {
-          if (minerData.data.length > 0) {
-            minerData.passedValidation = false;
-            minerData.validationError = 'Batch spot check failed';
-          }
-        }
-      }
-    }
-
-    // Phase 3: Validate each miner against batch results
-    for (const minerData of validationData) {
-      if (minerData.data.length > 0 && minerData.passedValidation) {
-        const spotCheckPassed = validateMinerAgainstBatch(
-          minerData.data,
-          fid,
-          minerData.minerUID,
-          verifiedReviewsMap
-        );
-
-        if (spotCheckPassed) {
-          logger.info(`UID ${minerData.minerUID}: Validation complete - ${minerData.count} reviews, most recent: ${minerData.mostRecentDate?.toISOString()}`);
-        } else {
-          logger.error(`UID ${minerData.minerUID}: Failed spot check validation`);
-          minerData.passedValidation = false;
-          minerData.validationError = 'Failed spot check verification';
-          minerData.count = 0;
-          minerData.mostRecentDate = undefined;
-        }
-      }
-    }
-
-    // Phase 4: Create scoring results with timing information
-    const { scores, meanScore, minScore, maxScore, finalScores } = calculateFinalScores(validationData, responseTimes, synapseTimeout);
+    // Create final scores and statistics
+    const { statistics, finalScores } = calculateFinalScores(selectedType.name, validationResults, synapseTimeout);
 
     // Return scoring results with statistics
-    const result = output({fid, scores, minScore, maxScore, meanScore, finalScores});
-    
+    const result = output({ metadata, typeId, typeName: selectedType.name, statistics, finalScores });
+
     // Send the data for digestion. Don't wait for it to complete
-    prepareAndSendForDigestion(responses, minerUIDs, fid);
+    selectedType.prepareAndSendForDigestion(responses, minerUIDs, metadata);
 
     return responseService.success(response, result);
   } catch (error) {

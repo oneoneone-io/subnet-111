@@ -1,41 +1,38 @@
 import createSyntheticRoute from './create-synthetic.js';
 import responseService from '#modules/response/index.js';
-import config from '#config';
 import time from '#modules/time/index.js';
-import random from '#modules/random/index.js';
-import apify from '#modules/apify/index.js';
-import getEligiblePlace from '#utils/validator/google-maps/create-synthetic/get-eligible-place.js';
+import retryable from '#modules/retryable/index.js';
+
+jest.mock('#utils/validator/types/index.js', () => ({
+  getRandomType: jest.fn().mockReturnValue({
+    id: 'google-maps-reviews',
+    name: 'Google Maps Reviews',
+    createSyntheticTask: jest.fn(),
+  }),
+}));
 
 jest.mock('#modules/response/index.js', () => ({
   success: jest.fn(),
   internalServerError: jest.fn(),
 }));
 
-jest.mock('#modules/retryable/index.js', () => {
-  return jest.fn().mockImplementation(async (function_) => {
-    return await function_();
-  });
-});
-
 jest.mock('#modules/logger/index.js', () => ({
   info: jest.fn(),
   error: jest.fn(),
 }));
 
-jest.mock('#utils/validator/google-maps/create-synthetic/get-eligible-place.js');
 jest.mock('#modules/time/index.js');
-jest.mock('#modules/random/index.js');
-jest.mock('#modules/apify/index.js');
+jest.mock('#utils/validator/types/index.js');
+jest.mock('#modules/retryable/index.js');
 
 describe('routes/validator/create-synthetic.js', () => {
-  let selectedPlace;
   let timestamp;
   let request;
   let response;
+  let metadata;
+  let timeout;
 
   beforeEach(() => {
-    jest.resetModules();
-
     timestamp = '2021-01-01T00:00:00.000Z';
     time.getCurrentTimestamp.mockReturnValue(timestamp);
     time.getDuration.mockReturnValue(0);
@@ -47,41 +44,33 @@ describe('routes/validator/create-synthetic.js', () => {
       status: jest.fn(),
       json: jest.fn(),
     };
-    selectedPlace = {
-      fid: 'selected-fid',
-      placeId: 'selected-place-id',
-      title: 'Selected Place',
-      reviewsCount: 10_000,
-      type: 'place',
+    metadata = {
+      dataId: 'selected-dataId',
+      id: 'selected-id',
     }
 
-    getEligiblePlace.mockResolvedValue(selectedPlace);
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-    jest.restoreAllMocks();
+    retryable.mockImplementation(() => ({ metadata, timeout }));
   });
 
   describe('.output()', () => {
     test('should output the result properly', () => {
       const result = createSyntheticRoute.output({
-        selectedPlace,
+        typeId: 'google-maps-reviews',
+        typeName: 'Google Maps Reviews',
+        metadata,
         totalDuration: 100,
+        timeout,
       });
       expect(result).toEqual({
         status: 'success',
         task: {
-          dataId: selectedPlace.fid,
-          id: selectedPlace.placeId,
-          synapse_params: {
-            language: config.VALIDATOR.GOOGLE_REVIEWS_SYNAPSE_PARAMS.language,
-            sort: config.VALIDATOR.GOOGLE_REVIEWS_SYNAPSE_PARAMS.sort,
-            timeout: config.VALIDATOR.GOOGLE_REVIEWS_SYNAPSE_PARAMS.timeout
-          },
+          typeId: 'google-maps-reviews',
+          typeName: 'Google Maps Reviews',
+          metadata,
           timestamp,
-          totalTime: 100
-        }
+          totalTime: 100,
+          timeout,
+        },
       });
     });
   });
@@ -109,10 +98,6 @@ describe('routes/validator/create-synthetic.js', () => {
   });
 
   describe('.execute()', () => {
-    beforeEach(() => {
-      random.fromArray.mockReturnValue(selectedPlace)
-    });
-
     test('should fail if validate() fails', async () => {
       delete process.env.APIFY_TOKEN;
       await createSyntheticRoute.execute(request, response);
@@ -123,30 +108,33 @@ describe('routes/validator/create-synthetic.js', () => {
     });
 
     test('should return response properly', async () => {
-      apify.runActorAndGetResults.mockResolvedValue([selectedPlace]);
-
       await createSyntheticRoute.execute(request, response);
       expect(responseService.success).toHaveBeenCalledWith(response, {
         status: 'success',
         task: {
-          dataId: selectedPlace.fid,
-          id: selectedPlace.placeId,
-          synapse_params: {
-            language: config.VALIDATOR.GOOGLE_REVIEWS_SYNAPSE_PARAMS.language,
-            sort: config.VALIDATOR.GOOGLE_REVIEWS_SYNAPSE_PARAMS.sort,
-            timeout: config.VALIDATOR.GOOGLE_REVIEWS_SYNAPSE_PARAMS.timeout
-          },
+          typeId: 'google-maps-reviews',
+          typeName: 'Google Maps Reviews',
+          metadata,
+          timeout,
           timestamp,
-          totalTime: 0
-        }
+          totalTime: 0,
+        },
       });
     });
 
-    test('should fail if getEligiblePlace() fails', async () => {
-      getEligiblePlace.mockRejectedValue(new Error('Failed to get eligible place'));
-
+    test('should fail if createSyntheticTask() fails', async () => {
+      retryable.mockImplementation(() => {
+        throw new Error('Failed to get eligible place');
+      });
       await createSyntheticRoute.execute(request, response);
-      expect(responseService.internalServerError).toHaveBeenCalled();
+      expect(responseService.internalServerError).toHaveBeenCalledWith(response, {
+        typeId: 'google-maps-reviews',
+        typeName: 'Google Maps Reviews',
+        error: 'Failed to create synthetic task',
+        message: 'Failed to get eligible place',
+        totalTime: 0,
+        timestamp,
+      });
     });
   });
 });

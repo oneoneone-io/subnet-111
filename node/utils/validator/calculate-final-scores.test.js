@@ -14,30 +14,30 @@ jest.mock('#modules/time/index.js', () => ({
 }));
 
 describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
-  let validationData;
-  let responseTimes;
+  let validationResults;
   const synapseTimeout = 120;
+  const typeName = 'TestType';
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Setup base test data
-    validationData = [
+    // Setup base test data with correct structure for new function signature
+    validationResults = [
       {
         minerUID: 'miner1',
         passedValidation: true,
         count: 100,
-        mostRecentDate: new Date('2024-03-20T10:00:00Z')
+        mostRecentDate: new Date('2024-03-20T10:00:00Z'),
+        responseTime: 10
       },
       {
         minerUID: 'miner2',
         passedValidation: true,
         count: 50,
-        mostRecentDate: new Date('2024-03-19T10:00:00Z')
+        mostRecentDate: new Date('2024-03-19T10:00:00Z'),
+        responseTime: 20
       }
     ];
-
-    responseTimes = [10, 20];
 
     // Mock time utility functions
     time.getMostRecentDate.mockReturnValue(new Date('2024-03-20T10:00:00Z'));
@@ -45,12 +45,12 @@ describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
   });
 
   test('should calculate scores correctly for valid results', () => {
-    const result = calculateFinalScores(validationData, responseTimes);
+    const result = calculateFinalScores(typeName, validationResults, synapseTimeout);
 
-    expect(result.scores).toHaveLength(2);
-    expect(result.meanScore).toBeDefined();
-    expect(result.minScore).toBeDefined();
-    expect(result.maxScore).toBeDefined();
+    expect(result.statistics.count).toBe(2);
+    expect(result.statistics.mean).toBeDefined();
+    expect(result.statistics.min).toBeDefined();
+    expect(result.statistics.max).toBeDefined();
     expect(result.finalScores).toHaveLength(2);
 
     // Check first miner's scores
@@ -71,10 +71,10 @@ describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
   });
 
   test('should handle validation failures', () => {
-    validationData[0].passedValidation = false;
-    validationData[0].validationError = 'Test error';
+    validationResults[0].passedValidation = false;
+    validationResults[0].validationError = 'Test error';
 
-    const result = calculateFinalScores(validationData, responseTimes, synapseTimeout);
+    const result = calculateFinalScores(typeName, validationResults, synapseTimeout);
 
     expect(result.finalScores[0].score).toBe(0);
     expect(result.finalScores[0].validationError).toBe('Test error');
@@ -84,9 +84,9 @@ describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
   });
 
   test('should handle timeout responses', () => {
-    responseTimes[0] = synapseTimeout;
+    validationResults[0].responseTime = synapseTimeout;
 
-    const result = calculateFinalScores(validationData, responseTimes, synapseTimeout);
+    const result = calculateFinalScores(typeName, validationResults, synapseTimeout);
 
     expect(result.finalScores[0].score).toBe(0);
     expect(result.finalScores[0].validationError).toContain('Response timeout');
@@ -96,27 +96,27 @@ describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
   });
 
   test('should handle no valid results', () => {
-    validationData = validationData.map(data => ({
+    validationResults = validationResults.map(data => ({
       ...data,
       passedValidation: false,
     }));
 
-    const result = calculateFinalScores(validationData, responseTimes, synapseTimeout);
+    const result = calculateFinalScores(typeName, validationResults, synapseTimeout);
 
     expect(result.finalScores).toHaveLength(2);
     expect(result.finalScores[0].score).toBe(0);
     expect(result.finalScores[1].score).toBe(0);
     expect(result.finalScores[0].validationError).toBe('No valid responses');
     expect(result.finalScores[1].validationError).toBe('No valid responses');
-    expect(result.scores).toEqual([0, 0]);
-    expect(result.meanScore).toBe(0);
-    expect(result.minScore).toBe(0);
-    expect(result.maxScore).toBe(0);
-    expect(logger.warning).toHaveBeenCalledWith('No valid results to score');
+    expect(result.statistics.count).toBe(2);
+    expect(result.statistics.mean).toBe(0);
+    expect(result.statistics.min).toBe(0);
+    expect(result.statistics.max).toBe(0);
+    expect(logger.warning).toHaveBeenCalledWith(`${typeName} - No valid results to score`);
   });
 
   test('should handle same dates for all miners', () => {
-    validationData = validationData.map(data => ({
+    validationResults = validationResults.map(data => ({
       ...data,
       mostRecentDate: new Date('2024-03-20T10:00:00Z')
     }));
@@ -124,44 +124,43 @@ describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
     time.getMostRecentDate.mockReturnValue(new Date('2024-03-20T10:00:00Z'));
     time.getOldestDate.mockReturnValue(new Date('2024-03-20T10:00:00Z'));
 
-    const result = calculateFinalScores(validationData, responseTimes, synapseTimeout);
+    const result = calculateFinalScores(typeName, validationResults, synapseTimeout);
 
     // Both miners should get full recency score since they have the same date
     expect(result.finalScores[0].components.recencyScore).toBe(1);
     expect(result.finalScores[1].components.recencyScore).toBe(1);
   });
 
-  test('should handle missing response times', () => {
-    responseTimes = [10]; // Only provide time for first miner
+  test('should handle response time timeout for individual miners', () => {
+    validationResults[1].responseTime = synapseTimeout; // Second miner times out
 
-    const result = calculateFinalScores(validationData, responseTimes, synapseTimeout);
+    const result = calculateFinalScores(typeName, validationResults, synapseTimeout);
 
     expect(result.finalScores[1].score).toBe(0);
     expect(result.finalScores[1].validationError).toContain('Response timeout');
   });
 
   test('should handle undefined dates', () => {
-    validationData[0].mostRecentDate = undefined;
+    validationResults[0].mostRecentDate = undefined;
 
-    const result = calculateFinalScores(validationData, responseTimes, synapseTimeout);
+    const result = calculateFinalScores(typeName, validationResults, synapseTimeout);
 
     expect(result.finalScores[0].components.recencyScore).toBe(0);
   });
 
   test('should handle undefined count and response time', () => {
-    validationData = validationData.map((data) => ({
+    validationResults = validationResults.map((data) => ({
       ...data,
       count: undefined,
-      responseTime: undefined
     }))
 
-    validationData[0].passedValidation = false;
-    validationData[0].responseTime = 0;
+    validationResults[0].passedValidation = false;
+    validationResults[0].responseTime = 0;
 
-    validationData[1].passedValidation = true;
-    validationData[1].responseTime = 0;
+    validationResults[1].passedValidation = true;
+    validationResults[1].responseTime = 0;
 
-    const result = calculateFinalScores(validationData, responseTimes, synapseTimeout);
+    const result = calculateFinalScores(typeName, validationResults, synapseTimeout);
 
     expect(result.finalScores[0].components.recencyScore).toBe(0);
   });
@@ -170,9 +169,57 @@ describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
     time.getMostRecentDate.mockReturnValue(false);
     time.getOldestDate.mockReturnValue(false);
 
-    const result = calculateFinalScores(validationData, responseTimes, synapseTimeout);
+    const result = calculateFinalScores(typeName, validationResults, synapseTimeout);
 
+    // When date range is 0 but mostRecentDate exists, miners get full recency score
     expect(result.finalScores[0].components.recencyScore).toBe(1);
     expect(result.finalScores[1].components.recencyScore).toBe(1);
+  });
+
+  test('should handle empty validation results array', () => {
+    const result = calculateFinalScores(typeName, [], synapseTimeout);
+
+    expect(result.finalScores).toHaveLength(0);
+    expect(result.statistics.count).toBe(0);
+    expect(result.statistics.mean).toBe(0);
+    expect(result.statistics.min).toBe(0);
+    expect(result.statistics.max).toBe(0);
+  });
+
+  test('should handle miners with zero response time', () => {
+    validationResults[0].responseTime = 0;
+
+    const result = calculateFinalScores(typeName, validationResults, synapseTimeout);
+
+    expect(result.finalScores[0].components.speedScore).toBe(0);
+  });
+
+  test('should handle miners with zero count', () => {
+    validationResults[0].count = 0;
+
+    const result = calculateFinalScores(typeName, validationResults, synapseTimeout);
+
+    expect(result.finalScores[0].components.volumeScore).toBe(0);
+  });
+
+  test('should use default synapseTimeout of 120 when not provided', () => {
+    // Set one miner to exactly 120 seconds (should timeout with default)
+    validationResults[0].responseTime = 120;
+    // Set another to just under 120 (should pass with default)
+    validationResults[1].responseTime = 119;
+
+    // Call without synapseTimeout parameter to test default value
+    const result = calculateFinalScores(typeName, validationResults);
+
+    // First miner should timeout (responseTime >= 120)
+    expect(result.finalScores[0].score).toBe(0);
+    expect(result.finalScores[0].validationError).toContain('Response timeout');
+    expect(result.finalScores[0].components.speedScore).toBe(0);
+    expect(result.finalScores[0].components.volumeScore).toBe(0);
+    expect(result.finalScores[0].components.recencyScore).toBe(0);
+
+    // Second miner should pass (responseTime < 120)
+    expect(result.finalScores[1].score).toBeGreaterThan(0);
+    expect(result.finalScores[1].passedValidation).toBe(true);
   });
 });

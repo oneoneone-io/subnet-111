@@ -21,39 +21,35 @@ import bittensor as bt
 from typing import List, Dict, Optional
 
 
-class GoogleMapsReviewsSynapse(bt.Synapse):
+class GenericSynapse(bt.Synapse):
     """
-    A synapse for handling Google Maps reviews data between validators and miners.
-    This protocol facilitates communication for Google Maps review-related tasks.
+    A synapse for handling data between validators and miners.
+    This protocol facilitates communication for data-related tasks.
 
     Request Flow:
-    1. Validator creates synapse with fid and parameters
-    2. Miner receives synapse and fetches reviews from Google Maps
-    3. Miner populates reviews field and returns synapse
+    1. Validator creates synapse with type_id and metadata
+    2. Miner receives synapse and fetches data
+    3. Miner populates responses field and returns synapse
     4. Validator scores the response
 
     Attributes:
-    - fid: Google Maps place identifier (FID) to fetch reviews for    
-    - language: Language code for reviews (e.g., "en", "es", "fr")
-    - sort: Sort order for reviews ("newest", "relevant", "highest", "lowest")
-    - timeout: Timeout for the request in seconds
-    - reviews: List of review data returned by the miner (filled by miner)
+    - type_id: The type of data to fetch
+    - metadata: The metadata for the data to fetch
     """
 
     # Required request inputs (set by validator)
-    fid: str    
-    language: str = "en"
-    sort: str = "newest"
-    timeout: int = 120
+    type_id: str
+    metadata: Dict[str, typing.Any]
+    timeout: int
 
     # Response output (filled by miner)
-    reviews: Optional[List[Dict[str, typing.Any]]] = None
+    responses: Optional[List[Dict[str, typing.Any]]] = None
 
     def deserialize(self) -> List[Dict[str, typing.Any]]:
         """
         Deserialize the reviews output for processing.
 
         Returns:
-        - List[Dict]: The deserialized reviews data, empty list if None
+        - List[Dict]: The deserialized responses data, empty list if None
         """
-        return self.reviews if self.reviews is not None else []
+        return self.responses if self.responses is not None else []

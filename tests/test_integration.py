@@ -14,7 +14,7 @@ import requests
 # Add the parent directory to the path so we can import oneoneone
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from oneoneone.protocol import GoogleMapsReviewsSynapse
+from oneoneone.protocol import GenericSynapse
 
 
 class TestMinerIntegration(unittest.TestCase):
@@ -101,7 +101,7 @@ class TestValidatorIntegration(unittest.TestCase):
         """Test creating and processing a synapse"""
         try:
             # Create a synapse
-            synapse = GoogleMapsReviewsSynapse(
+            synapse = GenericSynapse(
                 fid=self.test_fid, language="en", sort="newest"
             )
 
@@ -128,7 +128,7 @@ class TestValidatorIntegration(unittest.TestCase):
     def test_synapse_with_mock_reviews(self):
         """Test synapse with mock review data"""
         # Create synapse with mock data
-        synapse = GoogleMapsReviewsSynapse(
+        synapse = GenericSynapse(
             fid=self.test_fid, language="en", sort="newest"
         )
 
@@ -235,7 +235,7 @@ class TestIntegration:
         """Test the synapse object creation and serialization"""
         print("\nTesting synapse creation...")
 
-        synapse = GoogleMapsReviewsSynapse(
+        synapse = GenericSynapse(
             fid=self.test_fid,
             language="en",
             sort="newest",
@@ -273,7 +273,7 @@ class TestIntegration:
             }
         ]
 
-        synapse = GoogleMapsReviewsSynapse(
+        synapse = GenericSynapse(
             fid=self.test_fid, language="en", sort="newest"
         )
 

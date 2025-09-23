@@ -41,7 +41,7 @@ describe('#utils/validator/google-maps/score/perform-batch-spot-check.js', () =>
   test('should return the results properly', async () => {
     const result = await performBatchSpotCheck(responses, fid);
     expect(apify.runActorAndGetResults).toHaveBeenCalledWith(
-      config.VALIDATOR.APIFY_ACTORS.GOOGLE_MAPS_REVIEWS_SPOT_CHECK, {
+      config.VALIDATOR.GOOGLE_MAPS_REVIEWS.APIFY_ACTORS.SPOT_CHECK, {
         startUrls: [{ url: "reviewUrl", method: "GET" }]
       }
     );

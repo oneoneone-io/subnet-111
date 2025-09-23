@@ -36,7 +36,8 @@ VALIDATOR_NODE_PORT = int(os.getenv("VALIDATOR_NODE_PORT", 3002))
 
 def get_rewards(
     self,
-    fid: str,
+    type_id: str,
+    metadata: Dict[str, Any],
     responses: List[List[Dict[str, Any]]],
     response_times: List[float] = None,
 ) -> np.ndarray:
@@ -52,7 +53,8 @@ def get_rewards(
 
     Args:
         self: The validator instance
-        fid: The Google Maps place identifier (FID) that was queried
+        type_id: The type of data that was queried
+        metadata: The metadata for the data that was queried
         responses: A list of responses from miners (list of review dictionaries)
         response_times: A list of response times in seconds for each miner
 
@@ -66,7 +68,7 @@ def get_rewards(
         )
 
         bt.logging.info(f"Calling scoring endpoint: {validator_url}")
-        bt.logging.debug(f"Scoring {len(responses)} responses for fid: {fid}")
+        bt.logging.debug(f"Scoring {len(responses)} responses for type_id: {type_id}")
 
         # If response times not provided, use default values
         if response_times is None:
@@ -74,7 +76,8 @@ def get_rewards(
 
         # Prepare payload for scoring API
         payload = {
-            "fid": fid,
+            "typeId": type_id,
+            "metadata": metadata,
             "responses": responses,
             "responseTimes": response_times,  # Pass timing information
             "synapseTimeout": SYNAPSE_TIMEOUT,  # Pass the timeout configuration
