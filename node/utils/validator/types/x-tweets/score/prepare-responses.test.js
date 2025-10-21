@@ -64,7 +64,7 @@ describe('#utils/validator/types/x-tweets/score/prepare-responses.js', () => {
     });
 
     test('should handle null/undefined values', () => {
-      const tweet = { text: null, hashtags: undefined, username: null };
+      const tweet = { text: undefined, hashtags: undefined, username: undefined };
       const keyword = 'bitcoin';
 
       expect(checkKeywordPresence(tweet, keyword)).toBe(false);
@@ -89,7 +89,7 @@ describe('#utils/validator/types/x-tweets/score/prepare-responses.js', () => {
     });
 
     test('should return empty result for null tweets', () => {
-      const result = getTweetsForSpotCheck(null, 'miner1');
+      const result = getTweetsForSpotCheck(undefined, 'miner1');
 
       expect(result).toEqual({
         mostRecentDate: undefined,
@@ -207,7 +207,7 @@ describe('#utils/validator/types/x-tweets/score/prepare-responses.js', () => {
       const mockValidationResults = [
         {
           minerUID: 'miner1',
-          validationError: null,
+          validationError: undefined,
           passedValidation: false,
           count: 0,
           mostRecentDate: undefined,
@@ -279,7 +279,7 @@ describe('#utils/validator/types/x-tweets/score/prepare-responses.js', () => {
       const mockValidationResults = [
         {
           minerUID: 'miner1',
-          validationError: null,
+          validationError: undefined,
           passedValidation: false,
           count: 0,
           mostRecentDate: undefined,
@@ -309,7 +309,7 @@ describe('#utils/validator/types/x-tweets/score/prepare-responses.js', () => {
       const mockValidationResults = [
         {
           minerUID: 'miner1',
-          validationError: null,
+          validationError: undefined,
           passedValidation: false,
           count: 0,
           mostRecentDate: undefined,
@@ -343,7 +343,7 @@ describe('#utils/validator/types/x-tweets/score/prepare-responses.js', () => {
       const mockValidationResults = [
         {
           minerUID: 'miner1',
-          validationError: null,
+          validationError: undefined,
           passedValidation: false,
           count: 0,
           mostRecentDate: undefined,

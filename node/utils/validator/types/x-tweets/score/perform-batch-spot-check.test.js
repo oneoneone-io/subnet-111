@@ -20,11 +20,11 @@ jest.mock('#modules/retryable/index.js');
 jest.mock('#modules/array/index.js');
 
 describe('#utils/validator/types/x-tweets/score/perform-batch-spot-check.js', () => {
-  const originalEnv = process.env;
+  const originalEnvironment = process.env;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env = { ...originalEnv };
+    process.env = { ...originalEnvironment };
 
     // Mock config
     config.VALIDATOR = {
@@ -38,7 +38,7 @@ describe('#utils/validator/types/x-tweets/score/perform-batch-spot-check.js', ()
   });
 
   afterEach(() => {
-    process.env = originalEnv;
+    process.env = originalEnvironment;
   });
 
   test('should perform batch spot check successfully', async () => {
@@ -71,8 +71,8 @@ describe('#utils/validator/types/x-tweets/score/perform-batch-spot-check.js', ()
       { id: '3', text: 'Tweet 3', user: { username: 'user3' } }
     ];
 
-    retryable.mockImplementation(async (fn) => {
-      const response = await fn();
+    retryable.mockImplementation(async (function_) => {
+      const response = await function_();
       return response;
     });
 
@@ -153,8 +153,8 @@ describe('#utils/validator/types/x-tweets/score/perform-batch-spot-check.js', ()
 
     array.unique.mockReturnValue(['1']);
 
-    retryable.mockImplementation(async (fn) => {
-      const response = await fn();
+    retryable.mockImplementation(async (function_) => {
+      const response = await function_();
       return response;
     });
 
@@ -188,7 +188,7 @@ describe('#utils/validator/types/x-tweets/score/perform-batch-spot-check.js', ()
     array.unique.mockReturnValue(['1']);
 
     // Mock retryable to return undefined (failed result)
-    retryable.mockResolvedValue(undefined);
+    retryable.mockResolvedValue();
 
     process.env.DESEARCH_API_TOKEN = 'test-token';
 
@@ -208,8 +208,8 @@ describe('#utils/validator/types/x-tweets/score/perform-batch-spot-check.js', ()
 
     array.unique.mockReturnValue(['1']);
 
-    retryable.mockImplementation(async (fn) => {
-      const response = await fn();
+    retryable.mockImplementation(async (function_) => {
+      const response = await function_();
       return response;
     });
 
