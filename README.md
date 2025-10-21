@@ -23,7 +23,7 @@
 
 ## Overview
 
-The **oneoneone** Subnet is a decentralized AI ecosystem built on the Bittensor network that specializes in collecting, validating, and serving high-quality user-generated content from platforms across the web. Our protocol enables developers, researchers, and companies to access authentic, real-time user reviews and content at scale, enhanced by AI-powered analysis and understanding.
+The **oneoneone** Subnet is a decentralized AI ecosystem built on the Bittensor network that specializes in collecting, validating, and serving high-quality user-generated content from platforms across the web. Our protocol enables developers, researchers, and companies to access authentic, real-time user data and content at scale, enhanced by AI-powered analysis and understanding.
 
 ### Key Features
 
@@ -75,7 +75,9 @@ Each piece of content is enriched with AI-powered insights, providing deeper und
 - **Storage**: 32 GB SSD
 - **Network**: Stable internet connection
 - **Stake**: Minimum stake requirement for permit validation
-- **API Access**: Valid APIFY_TOKEN for data scraping
+- **Apify API Access**: Valid APIFY_TOKEN for data scraping
+- **Chutes API Access**: Valid CHUTES_API_TOKEN for keyword generation
+- **Desearch API Access**: Valid DESEARCH_API_TOKEN for data scraping
 
 ### Miners
 
@@ -84,7 +86,8 @@ Each piece of content is enriched with AI-powered insights, providing deeper und
 - **RAM**: 8 GB
 - **Storage**: 32 GB SSD
 - **Network**: Stable internet connection with good latency
-- **API Access**: Valid APIFY_TOKEN for data scraping
+- **Apify API Access**: Valid APIFY_TOKEN for data scraping
+- **Gravity API Access**: Valid GRAVITY_API_TOKEN for data scraping
 
 ### Required Software
 
@@ -165,13 +168,15 @@ cp node/.env.validator.example node/.env
 # For miners:
 cp node/.env.miner.example node/.env
 
-# Edit the node .env file to add your APIFY_TOKEN and PLATFORM_TOKEN (only for validators)
+# Edit the node .env file to add your required fields (only for validators)
 nano node/.env
 ```
 
 **Required Configuration:**
 - Root `.env`: Contains general project settings. No editing required
-- Node `.env`: Contains Node.js application settings. Requires `APIFY_TOKEN` and `PLATFORM_TOKEN` (only for validators)
+- Node `.env`: Contains Node.js application settings.
+- Required for miners: `APIFY_TOKEN`, `GRAVITY_API_TOKEN`,
+- Required for validators: `DESEARCH_API_TOKEN`, `CHUTES_API_TOKEN` and `PLATFORM_TOKEN` (ask from subnet owner team)
 
 #### APIFY Token Setup
 
@@ -182,6 +187,39 @@ nano node/.env
 5. Add the token to your `node/.env` file:
    ```bash
    APIFY_TOKEN=your_apify_token_here
+   ```
+
+#### Chutes API Token Setup (Validators Only)
+
+1. Go to [chutes.ai](https://chutes.ai)
+2. Press "Get Started" and login
+3. Navigate to API at [chutes.ai/app/api](https://chutes.ai/app/api)
+4. Create a new API Key
+5. Add the token to your `node/.env` file:
+   ```bash
+   CHUTES_API_TOKEN=your_chutes_token_here
+   ```
+
+#### Desearch API Token Setup (Validators Only)
+
+1. Go to [desearch.ai](https://desearch.ai)
+2. Press "API Dashboard" and login
+3. Navigate to API Keys at [console.desearch.ai/api-keys](https://console.desearch.ai/api-keys)
+4. Create a new API key
+5. Add the token to your `node/.env` file:
+   ```bash
+   DESEARCH_API_TOKEN=your_desearch_token_here
+   ```
+
+#### Macrocosmos Gravity API Token Setup (Miners Only)
+
+1. Go to [macrocosmos.ai](https://macrocosmos.ai) and login
+2. Navigate to Account Settings → API Keys at [app.macrocosmos.ai/account?tab=api-keys](https://app.macrocosmos.ai/account?tab=api-keys)
+3. Create a new API Key
+4. Add the token to your `node/.env` file:
+   ```bash
+   GRAVITY_API_TOKEN=your_gravity_token_here
+   GRAVITY_TWEET_LIMIT=100
    ```
 
 #### Platform Token Setup
@@ -362,6 +400,12 @@ Our automated quality assurance system:
 - Comprehensive field validation
 - Spot check verification against live data
 
+**X Tweets**
+- Randomly generated keywords from Chutes LLM
+- Direct data retrieval from Desearch (Subnet 22), and Gravity (Subnet 13)
+- Comprehensive field validation
+- Spot check verification against live data
+
 ### Validation Criteria
 
 For each response, we validate:
@@ -379,13 +423,13 @@ Our three-component scoring system ensures quality, efficiency, and freshness of
 
 ```python
 def calculate_score(miner_responses, response_times, synapse_timeout):
-    # Volume Score (50%) - Number of reviews returned
-    volume_score = miner_review_count / max_review_count_across_miners
+    # Volume Score (50%) - Number of items returned
+    volume_score = miner_item_count / max_item_count_across_miners
 
     # Speed Score (30%) - Processing efficiency
     speed_score = fastest_response_time / miner_response_time
 
-    # Recency Score (20%) - Freshness of most recent review
+    # Recency Score (20%) - Freshness of most recent item
     recency_score = (miner_most_recent_date - oldest_most_recent_date) / date_range
 
     # Final composite score
@@ -397,8 +441,8 @@ def calculate_score(miner_responses, response_times, synapse_timeout):
 ### Scoring Components
 
 **Volume Score (50%)**
-- Rewards miners who return more reviews
-- Normalized against the maximum review count across all miners
+- Rewards miners who return more items
+- Normalized against the maximum item count across all miners
 - Encourages comprehensive data collection
 
 **Speed Score (30%)**
@@ -407,8 +451,8 @@ def calculate_score(miner_responses, response_times, synapse_timeout):
 - Promotes efficient data processing
 
 **Recency Score (20%)**
-- Rewards miners whose most recent review is newer
-- Based on the freshness of the latest review returned
+- Rewards miners whose most recent item is newer
+- Based on the freshness of the latest item returned
 - Encourages up-to-date data collection
 
 ### Scoring Formula
@@ -416,7 +460,7 @@ def calculate_score(miner_responses, response_times, synapse_timeout):
 $$
 \begin{aligned}
 \text{Let:} \quad &T_{\min} = \min(T_i) \text{ (fastest response time)} \\
-                  &V_{\max} = \max(V_i) \text{ (highest review count)} \\
+                  &V_{\max} = \max(V_i) \text{ (highest item count)} \\
                   &D_{\max} = \max(D_i) \text{ (most recent date overall)} \\
                   &D_{\min} = \min(D_i) \text{ (oldest recent date)} \\
 \\
@@ -437,20 +481,20 @@ $$
 ### Validation Process
 
 **Spot Check System:**
-- Randomly selects 3 reviews from each miner's response
-- Verifies against live Google Maps data
+- Randomly selects 3 items from each miner's response
+- Verifies against live data depending on the type
 - Checks for exact matches of key data fields
 - Ensures data authenticity and prevents fabricated responses
 
 ## Roadmap
 
-| Phase | Milestone | Status |
-|-------|-----------|---------|
-| **Phase 1** (Kickoff) | Implementation of 3 core job types<br/>95%+ API success rate<br/>Network benchmarking | 🚧 In Progress |
-| **Phase 2** (AI Enhancement) | LLM-powered authenticity detection<br/>Intent and sentiment analysis<br/>Translation support | 📋 Planned |
-| **Phase 3** (Platform Launch) | oneoneone.io dashboard<br/>Early adopter onboarding<br/>Performance optimizations | 📋 Planned |
-| **Phase 4** (Technical Expansion) | 10+ job types<br/>First paying customers<br/>Buyback system implementation | 📋 Planned |
-| **Phase 5** (User Growth) | Customer base expansion<br/>15+ job types<br/>Enhanced platform features | 📋 Planned |
+| Phase                             | Milestone                                                                                    | Status        |
+| --------------------------------- | -------------------------------------------------------------------------------------------- | ------------- |
+| **Phase 1** (Kickoff)             | Implementation of 3 core job types<br/>95%+ API success rate<br/>Network benchmarking        | 🚧 In Progress |
+| **Phase 2** (AI Enhancement)      | LLM-powered authenticity detection<br/>Intent and sentiment analysis<br/>Translation support | 📋 Planned     |
+| **Phase 3** (Platform Launch)     | oneoneone.io dashboard<br/>Early adopter onboarding<br/>Performance optimizations            | 📋 Planned     |
+| **Phase 4** (Technical Expansion) | 10+ job types<br/>First paying customers<br/>Buyback system implementation                   | 📋 Planned     |
+| **Phase 5** (User Growth)         | Customer base expansion<br/>15+ job types<br/>Enhanced platform features                     | 📋 Planned     |
 
 ## Development
 

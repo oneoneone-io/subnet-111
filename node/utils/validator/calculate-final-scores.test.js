@@ -222,4 +222,59 @@ describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
     expect(result.finalScores[1].score).toBeGreaterThan(0);
     expect(result.finalScores[1].passedValidation).toBe(true);
   });
+
+  test('should handle validation error without specific error message', () => {
+    const validationResults = [
+      {
+        minerUID: 'miner1',
+        passedValidation: false,
+        responseTime: 50, // Less than timeout
+        validationError: undefined, // No specific error
+        count: 5,
+        mostRecentDate: new Date('2024-01-01')
+      }
+    ];
+
+    const result = calculateFinalScores(typeName, validationResults, 120);
+
+    expect(result.finalScores[0].validationError).toBe('No valid responses');
+    expect(result.finalScores[0].score).toBe(0);
+  });
+
+  test('should handle zero response time and count for speed score', () => {
+    const validationResults = [
+      {
+        minerUID: 'miner1',
+        passedValidation: true,
+        responseTime: 0, // Zero response time
+        count: 0, // Zero count
+        mostRecentDate: new Date('2024-01-01')
+      }
+    ];
+
+    const result = calculateFinalScores(typeName, validationResults, 120);
+
+    expect(result.finalScores[0].components.speedScore).toBe(0);
+  });
+
+  test('should handle empty scores array for statistics', () => {
+    const validationResults = [
+      {
+        minerUID: 'miner1',
+        passedValidation: false,
+        responseTime: 1000,
+        validationError: 'Failed validation',
+        count: 0,
+        mostRecentDate: undefined
+      }
+    ];
+
+    const result = calculateFinalScores(typeName, validationResults, 120);
+
+    // The statistics.count is the length of the finalScores array, not the count of valid scores
+    expect(result.statistics.count).toBe(1); // One final score entry
+    expect(result.statistics.mean).toBe(0);
+    expect(result.statistics.min).toBe(0);
+    expect(result.statistics.max).toBe(0);
+  });
 });

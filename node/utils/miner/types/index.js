@@ -1,7 +1,9 @@
 import GoogleMapsReviews from './google-maps-reviews/index.js';
+import XTweets from './x-tweets/index.js';
 
 const TYPES = [
-  GoogleMapsReviews
+  GoogleMapsReviews,
+  XTweets
 ]
 
 /**

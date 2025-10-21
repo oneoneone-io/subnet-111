@@ -11,10 +11,9 @@ async function retryable(function_, maxRetries = 3, delay = 1000) {
   let retries = 0;
   while (retries < maxRetries) {
     try {
-      logger.info(`Retrying function... ${retries + 1}/${maxRetries}`);
       return await function_();
     } catch (error) {
-      logger.error(`Retryable function failed: ${error.message}`);
+      logger.error(`${retries + 1}/${maxRetries} - Retryable function failed: ${error.message}`);
       retries++;
       await new Promise(resolve => setTimeout(resolve, delay));
     }

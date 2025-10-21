@@ -27,7 +27,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-from oneoneone.config import VALIDATOR_API_TIMEOUT, SYNAPSE_TIMEOUT
+from oneoneone.config import VALIDATOR_API_TIMEOUT
 
 # Environment variables for Node.js validator API
 VALIDATOR_NODE_HOST = os.getenv("VALIDATOR_NODE_HOST", "localhost")
@@ -40,6 +40,7 @@ def get_rewards(
     metadata: Dict[str, Any],
     responses: List[List[Dict[str, Any]]],
     response_times: List[float] = None,
+    timeout: float = None,
 ) -> np.ndarray:
     """
     Calculate rewards for miner responses by calling the Node.js validator scoring endpoint.
@@ -57,7 +58,7 @@ def get_rewards(
         metadata: The metadata for the data that was queried
         responses: A list of responses from miners (list of review dictionaries)
         response_times: A list of response times in seconds for each miner
-
+        timeout: The timeout for the synapse
     Returns:
         np.ndarray: An array of rewards (0.0 to 1.0) for each miner response
     """
@@ -72,7 +73,7 @@ def get_rewards(
 
         # If response times not provided, use default values
         if response_times is None:
-            response_times = [SYNAPSE_TIMEOUT] * len(responses)  # Default to max time
+            response_times = [timeout] * len(responses)  # Default to max time
 
         # Prepare payload for scoring API
         payload = {
@@ -80,7 +81,7 @@ def get_rewards(
             "metadata": metadata,
             "responses": responses,
             "responseTimes": response_times,  # Pass timing information
-            "synapseTimeout": SYNAPSE_TIMEOUT,  # Pass the timeout configuration
+            "synapseTimeout": timeout,  # Pass the timeout configuration
             "minerUIDs": [
                 int(uid) for uid in self.current_miner_uids
             ],  # Convert numpy types to Python ints

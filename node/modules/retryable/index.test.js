@@ -21,7 +21,6 @@ describe('modules/retryable', () => {
     test('should return the result of the function if it succeeds', async () => {
       const result = await retryable(function_);
 
-      expect(logger.info).toHaveBeenCalledTimes(1);
       expect(logger.error).toHaveBeenCalledTimes(0);
       expect(result).toBe('test');
     });
@@ -32,7 +31,6 @@ describe('modules/retryable', () => {
 
       const result = await retryable(function_, 3, 1);
 
-      expect(logger.info).toHaveBeenCalledTimes(2);
       expect(logger.error).toHaveBeenCalledTimes(1);
       expect(result).toBe('test');
     });
@@ -42,7 +40,6 @@ describe('modules/retryable', () => {
 
       const result = await retryable(function_, 3, 1);
 
-      expect(logger.info).toHaveBeenCalledTimes(3);
       expect(logger.error).toHaveBeenCalledTimes(3);
       expect(result).toBe(undefined);
     });

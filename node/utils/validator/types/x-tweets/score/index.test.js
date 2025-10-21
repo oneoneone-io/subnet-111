@@ -1,5 +1,5 @@
 import logger from '#modules/logger/index.js';
-import { prepareResponses } from '#utils/validator/types/google-maps-reviews/score/prepare-responses.js';
+import { prepareResponses } from '#utils/validator/types/x-tweets/score/prepare-responses.js';
 import performBatchSpotCheck from './perform-batch-spot-check.js';
 import validateMinerAgainstBatch from './validate-miner-against-batch.js';
 import score from './index.js';
@@ -9,14 +9,14 @@ jest.mock('#modules/logger/index.js', () => ({
   error: jest.fn(),
 }));
 
-jest.mock('#utils/validator/types/google-maps-reviews/score/prepare-responses.js', () => ({
+jest.mock('#utils/validator/types/x-tweets/score/prepare-responses.js', () => ({
   prepareResponses: jest.fn(),
 }));
 
 jest.mock('./perform-batch-spot-check.js');
 jest.mock('./validate-miner-against-batch.js');
 
-describe('#utils/validator/types/google-maps-reviews/score/index.js', () => {
+describe('#utils/validator/types/x-tweets/score/index.js', () => {
   let mockResponses;
   let mockMetadata;
   let mockResponseTimes;
@@ -28,11 +28,11 @@ describe('#utils/validator/types/google-maps-reviews/score/index.js', () => {
 
     // Setup default test data
     mockResponses = [
-      [{ reviewId: '1', text: 'Review 1' }],
-      [{ reviewId: '2', text: 'Review 2' }],
-      [{ reviewId: '3', text: 'Review 3' }]
+      [{ tweetId: '1', text: 'Tweet 1' }],
+      [{ tweetId: '2', text: 'Tweet 2' }],
+      [{ tweetId: '3', text: 'Tweet 3' }]
     ];
-    mockMetadata = { dataId: 'test-facility-123' };
+    mockMetadata = { keyword: '"test-keyword"' };
     mockResponseTimes = [1000, 2000, 3000];
     mockSynapseTimeout = 120;
     mockMinerUIDs = ['miner1', 'miner2', 'miner3'];
@@ -48,7 +48,7 @@ describe('#utils/validator/types/google-maps-reviews/score/index.js', () => {
 
       prepareResponses.mockReturnValue(mockValidationResults);
 
-      const result = await score(mockResponses, mockMetadata, mockResponseTimes, mockSynapseTimeout, mockMinerUIDs, 'google-maps-reviews');
+      const result = await score(mockResponses, mockMetadata, mockResponseTimes, mockSynapseTimeout, mockMinerUIDs, 'x-tweets');
 
       expect(prepareResponses).toHaveBeenCalledWith(
         mockResponses,
@@ -56,7 +56,7 @@ describe('#utils/validator/types/google-maps-reviews/score/index.js', () => {
         mockResponseTimes,
         mockSynapseTimeout,
         mockMetadata,
-        'google-maps-reviews'
+        'x-tweets'
       );
       expect(performBatchSpotCheck).not.toHaveBeenCalled();
       expect(validateMinerAgainstBatch).not.toHaveBeenCalled();
@@ -68,57 +68,57 @@ describe('#utils/validator/types/google-maps-reviews/score/index.js', () => {
         {
           minerUID: 'miner1',
           passedValidation: true,
-          data: [{ reviewId: '1', text: 'Review 1' }],
+          data: [{ tweetId: '1', text: 'Tweet 1' }],
           count: 1,
           mostRecentDate: new Date('2024-03-20')
         },
         {
           minerUID: 'miner2',
           passedValidation: true,
-          data: [{ reviewId: '2', text: 'Review 2' }],
+          data: [{ tweetId: '2', text: 'Tweet 2' }],
           count: 1,
           mostRecentDate: new Date('2024-03-19')
         }
       ];
 
-      const mockVerifiedReviewsMap = new Map([
-        ['1', { reviewId: '1', verified: true }],
-        ['2', { reviewId: '2', verified: true }]
+      const mockVerifiedTweetsMap = new Map([
+        ['1', { id: '1', verified: true }],
+        ['2', { id: '2', verified: true }]
       ]);
 
       prepareResponses.mockReturnValue(mockValidationResults);
-      performBatchSpotCheck.mockResolvedValue(mockVerifiedReviewsMap);
+      performBatchSpotCheck.mockResolvedValue(mockVerifiedTweetsMap);
       validateMinerAgainstBatch.mockReturnValue(true);
 
       const result = await score(mockResponses, mockMetadata, mockResponseTimes, mockSynapseTimeout, mockMinerUIDs);
 
       // Verify batch spot check was called with correct parameters
       expect(performBatchSpotCheck).toHaveBeenCalledWith([
-        { minerUID: 'miner1', reviews: [{ reviewId: '1', text: 'Review 1' }] },
-        { minerUID: 'miner2', reviews: [{ reviewId: '2', text: 'Review 2' }] }
-      ], 'test-facility-123');
+        { minerUID: 'miner1', tweets: [{ tweetId: '1', text: 'Tweet 1' }] },
+        { minerUID: 'miner2', tweets: [{ tweetId: '2', text: 'Tweet 2' }] }
+      ], '"test-keyword"');
 
       // Verify validation was performed for each miner
       expect(validateMinerAgainstBatch).toHaveBeenCalledTimes(2);
       expect(validateMinerAgainstBatch).toHaveBeenCalledWith(
-        [{ reviewId: '1', text: 'Review 1' }],
-        'test-facility-123',
+        [{ tweetId: '1', text: 'Tweet 1' }],
+        '"test-keyword"',
         'miner1',
-        mockVerifiedReviewsMap
+        mockVerifiedTweetsMap
       );
       expect(validateMinerAgainstBatch).toHaveBeenCalledWith(
-        [{ reviewId: '2', text: 'Review 2' }],
-        'test-facility-123',
+        [{ tweetId: '2', text: 'Tweet 2' }],
+        '"test-keyword"',
         'miner2',
-        mockVerifiedReviewsMap
+        mockVerifiedTweetsMap
       );
 
       // Verify logging
       expect(logger.info).toHaveBeenCalledWith(
-        'Google Maps Reviews - UID miner1: Validation complete - 1 reviews, most recent: 2024-03-20T00:00:00.000Z'
+        'X Tweets - UID miner1: Validation complete - 1 tweets, most recent: 2024-03-20T00:00:00.000Z'
       );
       expect(logger.info).toHaveBeenCalledWith(
-        'Google Maps Reviews - UID miner2: Validation complete - 1 reviews, most recent: 2024-03-19T00:00:00.000Z'
+        'X Tweets - UID miner2: Validation complete - 1 tweets, most recent: 2024-03-19T00:00:00.000Z'
       );
 
       expect(result).toEqual(mockValidationResults);
@@ -129,7 +129,7 @@ describe('#utils/validator/types/google-maps-reviews/score/index.js', () => {
         {
           minerUID: 'miner1',
           passedValidation: true,
-          data: [{ reviewId: '1', text: 'Review 1' }],
+          data: [{ tweetId: '1', text: 'Tweet 1' }],
           count: 1,
           mostRecentDate: new Date('2024-03-20')
         },
@@ -142,7 +142,7 @@ describe('#utils/validator/types/google-maps-reviews/score/index.js', () => {
         {
           minerUID: 'miner3',
           passedValidation: true,
-          data: [{ reviewId: '3', text: 'Review 3' }],
+          data: [{ tweetId: '3', text: 'Tweet 3' }],
           count: 1,
           mostRecentDate: new Date('2024-03-18')
         }
@@ -155,15 +155,15 @@ describe('#utils/validator/types/google-maps-reviews/score/index.js', () => {
 
       // Verify error logging
       expect(logger.error).toHaveBeenCalledWith(
-        'Google Maps Reviews - Batch spot check failed:',
+        'X Tweets - Batch spot check failed:',
         expect.any(Error)
       );
 
       // Verify batch spot check was attempted
       expect(performBatchSpotCheck).toHaveBeenCalledWith([
-        { minerUID: 'miner1', reviews: [{ reviewId: '1', text: 'Review 1' }] },
-        { minerUID: 'miner3', reviews: [{ reviewId: '3', text: 'Review 3' }] }
-      ], 'test-facility-123');
+        { minerUID: 'miner1', tweets: [{ tweetId: '1', text: 'Tweet 1' }] },
+        { minerUID: 'miner3', tweets: [{ tweetId: '3', text: 'Tweet 3' }] }
+      ], '"test-keyword"');
 
       // Verify validation against batch was not called
       expect(validateMinerAgainstBatch).not.toHaveBeenCalled();
@@ -181,26 +181,26 @@ describe('#utils/validator/types/google-maps-reviews/score/index.js', () => {
         {
           minerUID: 'miner1',
           passedValidation: true,
-          data: [{ reviewId: '1', text: 'Review 1' }],
+          data: [{ tweetId: '1', text: 'Tweet 1' }],
           count: 1,
           mostRecentDate: new Date('2024-03-20')
         },
         {
           minerUID: 'miner2',
           passedValidation: true,
-          data: [{ reviewId: '2', text: 'Review 2' }],
+          data: [{ tweetId: '2', text: 'Tweet 2' }],
           count: 2,
           mostRecentDate: new Date('2024-03-19')
         }
       ];
 
-      const mockVerifiedReviewsMap = new Map([
-        ['1', { reviewId: '1', verified: true }],
-        ['2', { reviewId: '2', verified: true }]
+      const mockVerifiedTweetsMap = new Map([
+        ['1', { id: '1', verified: true }],
+        ['2', { id: '2', verified: true }]
       ]);
 
       prepareResponses.mockReturnValue(mockValidationResults);
-      performBatchSpotCheck.mockResolvedValue(mockVerifiedReviewsMap);
+      performBatchSpotCheck.mockResolvedValue(mockVerifiedTweetsMap);
       validateMinerAgainstBatch
         .mockReturnValueOnce(true)  // miner1 passes
         .mockReturnValueOnce(false); // miner2 fails
@@ -212,12 +212,12 @@ describe('#utils/validator/types/google-maps-reviews/score/index.js', () => {
 
       // Verify success logging for miner1
       expect(logger.info).toHaveBeenCalledWith(
-        'Google Maps Reviews - UID miner1: Validation complete - 1 reviews, most recent: 2024-03-20T00:00:00.000Z'
+        'X Tweets - UID miner1: Validation complete - 1 tweets, most recent: 2024-03-20T00:00:00.000Z'
       );
 
       // Verify failure logging for miner2
       expect(logger.error).toHaveBeenCalledWith(
-        'Google Maps Reviews - UID miner2: Failed spot check validation'
+        'X Tweets - UID miner2: Failed spot check validation'
       );
 
       // Verify results
@@ -239,34 +239,34 @@ describe('#utils/validator/types/google-maps-reviews/score/index.js', () => {
         {
           minerUID: 'miner2',
           passedValidation: true,
-          data: [{ reviewId: '2', text: 'Review 2' }],
+          data: [{ tweetId: '2', text: 'Tweet 2' }],
           count: 1,
           mostRecentDate: new Date('2024-03-19')
         }
       ];
 
-      const mockVerifiedReviewsMap = new Map([
-        ['2', { reviewId: '2', verified: true }]
+      const mockVerifiedTweetsMap = new Map([
+        ['2', { id: '2', verified: true }]
       ]);
 
       prepareResponses.mockReturnValue(mockValidationResults);
-      performBatchSpotCheck.mockResolvedValue(mockVerifiedReviewsMap);
+      performBatchSpotCheck.mockResolvedValue(mockVerifiedTweetsMap);
       validateMinerAgainstBatch.mockReturnValue(true);
 
       const result = await score(mockResponses, mockMetadata, mockResponseTimes, mockSynapseTimeout, mockMinerUIDs);
 
       // Verify batch spot check only includes valid miners
       expect(performBatchSpotCheck).toHaveBeenCalledWith([
-        { minerUID: 'miner2', reviews: [{ reviewId: '2', text: 'Review 2' }] }
-      ], 'test-facility-123');
+        { minerUID: 'miner2', tweets: [{ tweetId: '2', text: 'Tweet 2' }] }
+      ], '"test-keyword"');
 
       // Verify validation was only performed for valid miners
       expect(validateMinerAgainstBatch).toHaveBeenCalledTimes(1);
       expect(validateMinerAgainstBatch).toHaveBeenCalledWith(
-        [{ reviewId: '2', text: 'Review 2' }],
-        'test-facility-123',
+        [{ tweetId: '2', text: 'Tweet 2' }],
+        '"test-keyword"',
         'miner2',
-        mockVerifiedReviewsMap
+        mockVerifiedTweetsMap
       );
 
       // Verify miner1 remained failed
@@ -275,7 +275,7 @@ describe('#utils/validator/types/google-maps-reviews/score/index.js', () => {
       expect(result[1].passedValidation).toBe(true);
     });
 
-    test('should handle empty selected spot check reviews gracefully', async () => {
+    test('should handle empty selected spot check tweets gracefully', async () => {
       const mockValidationResults = [
         {
           minerUID: 'miner1',
@@ -307,25 +307,25 @@ describe('#utils/validator/types/google-maps-reviews/score/index.js', () => {
         {
           minerUID: 'miner1',
           passedValidation: true,
-          data: [{ reviewId: '1', text: 'Review 1' }],
+          data: [{ tweetId: '1', text: 'Tweet 1' }],
           count: 1,
           mostRecentDate: undefined // No date
         }
       ];
 
-      const mockVerifiedReviewsMap = new Map([
-        ['1', { reviewId: '1', verified: true }]
+      const mockVerifiedTweetsMap = new Map([
+        ['1', { id: '1', verified: true }]
       ]);
 
       prepareResponses.mockReturnValue(mockValidationResults);
-      performBatchSpotCheck.mockResolvedValue(mockVerifiedReviewsMap);
+      performBatchSpotCheck.mockResolvedValue(mockVerifiedTweetsMap);
       validateMinerAgainstBatch.mockReturnValue(true);
 
       const result = await score(mockResponses, mockMetadata, mockResponseTimes, mockSynapseTimeout, mockMinerUIDs);
 
       // Verify logging handles undefined date gracefully
       expect(logger.info).toHaveBeenCalledWith(
-        'Google Maps Reviews - UID miner1: Validation complete - 1 reviews, most recent: undefined'
+        'X Tweets - UID miner1: Validation complete - 1 tweets, most recent: undefined'
       );
 
       expect(result[0].passedValidation).toBe(true);
@@ -336,7 +336,7 @@ describe('#utils/validator/types/google-maps-reviews/score/index.js', () => {
         {
           minerUID: 'miner1',
           passedValidation: true,
-          data: [{ reviewId: '1', text: 'Review 1' }],
+          data: [{ tweetId: '1', text: 'Tweet 1' }],
           count: 1,
           mostRecentDate: new Date('2024-03-20')
         },
@@ -355,19 +355,19 @@ describe('#utils/validator/types/google-maps-reviews/score/index.js', () => {
         {
           minerUID: 'miner4',
           passedValidation: true,
-          data: [{ reviewId: '4', text: 'Review 4' }],
+          data: [{ tweetId: '4', text: 'Tweet 4' }],
           count: 1,
           mostRecentDate: new Date('2024-03-18')
         }
       ];
 
-      const mockVerifiedReviewsMap = new Map([
-        ['1', { reviewId: '1', verified: true }],
-        ['4', { reviewId: '4', verified: true }]
+      const mockVerifiedTweetsMap = new Map([
+        ['1', { id: '1', verified: true }],
+        ['4', { id: '4', verified: true }]
       ]);
 
       prepareResponses.mockReturnValue(mockValidationResults);
-      performBatchSpotCheck.mockResolvedValue(mockVerifiedReviewsMap);
+      performBatchSpotCheck.mockResolvedValue(mockVerifiedTweetsMap);
       validateMinerAgainstBatch
         .mockReturnValueOnce(true)  // miner1 passes
         .mockReturnValueOnce(false); // miner4 fails
@@ -376,9 +376,9 @@ describe('#utils/validator/types/google-maps-reviews/score/index.js', () => {
 
       // Verify batch spot check only includes miners with data
       expect(performBatchSpotCheck).toHaveBeenCalledWith([
-        { minerUID: 'miner1', reviews: [{ reviewId: '1', text: 'Review 1' }] },
-        { minerUID: 'miner4', reviews: [{ reviewId: '4', text: 'Review 4' }] }
-      ], 'test-facility-123');
+        { minerUID: 'miner1', tweets: [{ tweetId: '1', text: 'Tweet 1' }] },
+        { minerUID: 'miner4', tweets: [{ tweetId: '4', text: 'Tweet 4' }] }
+      ], '"test-keyword"');
 
       // Verify validation was only performed for miners with data
       expect(validateMinerAgainstBatch).toHaveBeenCalledTimes(2);
@@ -397,9 +397,9 @@ describe('#utils/validator/types/google-maps-reviews/score/index.js', () => {
     test('should handle empty responses array', async () => {
       prepareResponses.mockReturnValue([]);
 
-      const result = await score([], mockMetadata, [], mockSynapseTimeout, [], 'google-maps-reviews');
+      const result = await score([], mockMetadata, [], mockSynapseTimeout, [], 'x-tweets');
 
-      expect(prepareResponses).toHaveBeenCalledWith([], [], [], mockSynapseTimeout, mockMetadata, 'google-maps-reviews');
+      expect(prepareResponses).toHaveBeenCalledWith([], [], [], mockSynapseTimeout, mockMetadata, 'x-tweets');
       expect(performBatchSpotCheck).not.toHaveBeenCalled();
       expect(validateMinerAgainstBatch).not.toHaveBeenCalled();
       expect(result).toEqual([]);

@@ -1,5 +1,5 @@
 import logger from '#modules/logger/index.js';
-import fetch from 'node-fetch';
+import retryFetch from '#modules/retry-fetch/index.js';
 
 const DIGESTION_API_URL = 'https://oneoneone.io/api/digest';
 
@@ -17,7 +17,7 @@ const sendForDigestion = async (type, minerUID, data) => {
 
     let response;
     try {
-        response = await fetch(DIGESTION_API_URL, {
+        response = await retryFetch(DIGESTION_API_URL, {
             method: "POST",
             headers: {
                 'Content-Type': 'application/json',
@@ -32,7 +32,7 @@ const sendForDigestion = async (type, minerUID, data) => {
     } catch (error) {
         logger.error(`Error sending for digestion: ${error}`);
     }
-    
+
     return response;
 }
 
