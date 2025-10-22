@@ -117,7 +117,6 @@ class Miner(BaseMinerNeuron):
         Returns:
             Tuple of (should_blacklist, reason)
         """
-        return False, "Hotkey recognized!"
         if synapse.dendrite is None or synapse.dendrite.hotkey is None:
             bt.logging.warning("Received a request without a dendrite or hotkey.")
             return True, "Missing dendrite or hotkey"
