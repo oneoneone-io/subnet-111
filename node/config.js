@@ -65,7 +65,7 @@ export default {
 
       // Synapse configurations
       TWEETS_SYNAPSE_PARAMS: {
-        timeout: 240
+        timeout: 120
       }
     }
   },
