@@ -38,6 +38,7 @@ Rules:
  * @returns {Promise<Array<string>>} - Array of keywords
  */
 async function generateKeywordsFromChutes() {
+  const model = random.fromArray(config.VALIDATOR.X_TWEETS.CHUTES_MODELS);
   const response = await retryFetch(config.VALIDATOR.X_TWEETS.CHUTES_API_URL, {
     method: 'POST',
     headers: {
@@ -45,7 +46,7 @@ async function generateKeywordsFromChutes() {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      model: config.VALIDATOR.X_TWEETS.CHUTES_MODEL,
+      model,
       messages: [
         {
           role: 'user',

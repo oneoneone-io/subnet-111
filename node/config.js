@@ -53,8 +53,13 @@ export default {
 
       // Chutes API configuration
       CHUTES_API_URL: 'https://llm.chutes.ai/v1/chat/completions',
-      CHUTES_MODEL: 'chutesai/Mistral-Small-3.2-24B-Instruct-2506',
-      
+      CHUTES_MODELS: [
+        'chutesai/Mistral-Small-3.2-24B-Instruct-2506',
+        'chutesai/Mistral-Small-3.1-24B-Instruct-2503',
+        'unsloth/Mistral-Nemo-Instruct-2407',
+        'unsloth/Mistral-Small-24B-Instruct-2501'
+      ],
+
       // Desearch API configuration
       DESEARCH_API_URL: 'https://api.desearch.ai/twitter/post',
 

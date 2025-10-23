@@ -24,12 +24,13 @@ describe('utils/validator/types/x-tweets/create-synthetic/index.js', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     process.env = { ...originalEnvironment };
+    Math.random = jest.fn().mockReturnValue(0);
 
     // Mock config
     config.VALIDATOR = {
       X_TWEETS: {
         CHUTES_API_URL: 'https://api.chutes.com/v1/chat/completions',
-        CHUTES_MODEL: 'gpt-4',
+        CHUTES_MODELS: ['gpt-4'],
         TWEETS_SYNAPSE_PARAMS: {
           timeout: 120
         }
