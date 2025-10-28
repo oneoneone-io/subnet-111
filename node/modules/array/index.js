@@ -89,7 +89,15 @@ const validateArray = (array, requiredFields) => {
   return { valid, invalid };
 };
 
+/**
+ * Create a new array with unique elements
+ * @param {Array} array - The array to create a new array with unique elements from
+ * @returns {Array} - The new array with unique elements
+ */
+const unique = (array) => [...new Set(array)];
+
 export default {
   uniqueBy,
-  validateArray
+  validateArray,
+  unique
 };

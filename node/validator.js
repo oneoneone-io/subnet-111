@@ -33,11 +33,14 @@ app.listen(PORT, () => {
   logger.info(`Scoring endpoint: POST /score-responses`);
   logger.info(`Configuration:`);
   logger.info(`  - Spot check validation: ${config.VALIDATOR.SPOT_CHECK_COUNT} reviews per validation`);
-  logger.info(`  - Synapse timeout: ${config.VALIDATOR.SYNAPSE_TIMEOUT} seconds`);
   logger.info(`  - Google Reviews synapse parameters:`);
   logger.info(`    * Count: dynamically generated`);
   logger.info(`    * Language: ${config.VALIDATOR.GOOGLE_MAPS_REVIEWS.REVIEWS_SYNAPSE_PARAMS.language}`);
   logger.info(`    * Sort: ${config.VALIDATOR.GOOGLE_MAPS_REVIEWS.REVIEWS_SYNAPSE_PARAMS.sort}`);
+  logger.info(`  - X-Tweets synapse parameters:`);
+  logger.info(`    * Count: dynamically generated`);
+  logger.info(`    * Chutes model: ${config.VALIDATOR.X_TWEETS.CHUTES_MODEL}`);
+  logger.info(`    * Timeout: ${config.VALIDATOR.X_TWEETS.TWEETS_SYNAPSE_PARAMS.timeout} seconds`);
   logger.info(`  - Apify token configured: ${Boolean(process.env.APIFY_TOKEN)}`);
   logger.info('='.repeat(50));
 });

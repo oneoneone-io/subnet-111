@@ -1,7 +1,10 @@
 import GoogleMapsReviews from './google-maps-reviews/index.js';
+import XTweets from './x-tweets/index.js';
+import random from '#modules/random/index.js';
 
 const TYPES = [
-  GoogleMapsReviews
+  GoogleMapsReviews,
+  XTweets
 ]
 
 /**
@@ -17,10 +20,7 @@ const getTypeById = (id) => {
  * Get a random type from the TYPES array
  * @returns {Object} - The random type
  */
-const getRandomType = () => {
-  const randomIndex = Math.floor(Math.random() * TYPES.length);
-  return TYPES[randomIndex];
-}
+const getRandomType = () => random.fromArray(TYPES);
 
 export default {
   getRandomType,

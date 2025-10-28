@@ -31,7 +31,7 @@ load_dotenv()
 # Import oneoneone components
 import oneoneone
 from oneoneone.base.miner import BaseMinerNeuron
-from oneoneone.config import SYNAPSE_TIMEOUT, VALIDATOR_MIN_STAKE
+from oneoneone.config import VALIDATOR_MIN_STAKE
 
 # Environment variables for Node.js miner API connection
 MINER_NODE_HOST = os.getenv("MINER_NODE_HOST", "localhost")
@@ -94,7 +94,9 @@ class Miner(BaseMinerNeuron):
                         synapse.responses = []
 
         except asyncio.TimeoutError:
-            bt.logging.error(f"Timeout calling local API for type_id: {synapse.type_id}")
+            bt.logging.error(
+                f"Timeout calling local API for type_id: {synapse.type_id}"
+            )
             synapse.responses = []
         except Exception as e:
             bt.logging.error(f"Error calling local API: {str(e)}")
@@ -153,9 +155,7 @@ class Miner(BaseMinerNeuron):
         )
         return False, "Hotkey recognized!"
 
-    async def priority(
-        self, synapse: oneoneone.protocol.GenericSynapse
-    ) -> float:
+    async def priority(self, synapse: oneoneone.protocol.GenericSynapse) -> float:
         """
         Determines the priority of incoming requests based on stake.
         Higher stake holders get higher priority in processing queue.

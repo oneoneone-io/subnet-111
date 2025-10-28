@@ -1,8 +1,8 @@
 import sendForDigestion from './send-for-digestion.js';
-import fetch from 'node-fetch';
+import retryFetch from '#modules/retry-fetch/index.js';
 import logger from '#modules/logger/index.js';
 
-jest.mock('node-fetch', () => jest.fn().mockResolvedValue({}));
+jest.mock('#modules/retry-fetch/index.js', () => jest.fn().mockResolvedValue({}));
 
 jest.mock('#modules/logger/index.js', () => ({
   info: jest.fn(),
@@ -17,8 +17,8 @@ describe('#utils/validator/send-for-digestion.js', () => {
 
   test('should send the data for digestion', async () => {
     await sendForDigestion('google-maps-reviews', '123', [{ id: 1, name: 'test' }]);
-    expect(fetch).toHaveBeenCalledTimes(1);
-    expect(fetch).toHaveBeenCalledWith('https://oneoneone.io/api/digest', {
+    expect(retryFetch).toHaveBeenCalledTimes(1);
+    expect(retryFetch).toHaveBeenCalledWith('https://oneoneone.io/api/digest', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -35,11 +35,11 @@ describe('#utils/validator/send-for-digestion.js', () => {
   test('should not send the data for digestion if the platform token is not set', async () => {
     process.env.PLATFORM_TOKEN = '';
     await sendForDigestion('google-maps-reviews', '123', [{ id: 1, name: 'test' }]);
-    expect(fetch).not.toHaveBeenCalled();
+    expect(retryFetch).not.toHaveBeenCalled();
   });
 
   test('should log an error if the fetch fails', async () => {
-    fetch.mockRejectedValue(new Error('Fetch failed'));
+    retryFetch.mockRejectedValue(new Error('Fetch failed'));
     await sendForDigestion('google-maps-reviews', '123', [{ id: 1, name: 'test' }]);
     expect(logger.error).toHaveBeenCalledWith('Error sending for digestion: Error: Fetch failed');
   });

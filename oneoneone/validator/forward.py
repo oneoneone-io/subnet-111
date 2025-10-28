@@ -31,7 +31,6 @@ from oneoneone.validator.reward import get_rewards
 from oneoneone.utils.uids import get_random_uids
 from oneoneone.config import (
     VALIDATOR_API_TIMEOUT,
-    SYNAPSE_TIMEOUT,
     SYNAPSE_WAIT_TIME,
     MAX_MINER_COUNT,
 )
@@ -61,7 +60,9 @@ async def create_synthetic_task():
     response.raise_for_status()
 
     task_data = response.json()
-    bt.logging.info(f"Synthetic task created - Type ID: {task_data['task']['typeId']} with metadata: {task_data['task']['metadata']}")
+    bt.logging.info(
+        f"Synthetic task created - Type ID: {task_data['task']['typeId']} with metadata: {task_data['task']['metadata']}"
+    )
 
     return task_data["task"]
 
@@ -99,7 +100,9 @@ async def forward(self):
     # Store the miner UIDs for scoring
     self.current_miner_uids = miner_uids
 
-    bt.logging.info(f"Querying miners with synthetic task: type_id={type_id}, metadata={metadata}")
+    bt.logging.info(
+        f"Querying miners with synthetic task: type_id={type_id}, metadata={metadata}"
+    )
 
     # Debug: Log axon information for transparency
     axons = [self.metagraph.axons[uid] for uid in miner_uids]
@@ -211,6 +214,7 @@ async def forward(self):
         metadata=metadata,
         responses=responses,
         response_times=self.miner_response_times,
+        timeout=timeout,
     )
 
     bt.logging.info(

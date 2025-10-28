@@ -14,6 +14,25 @@ describe('modules/array', () => {
     array_ = [{a: 1}, {a: 1}, {a: 3}];
   });
 
+  describe('.unique()', () => {
+    test('should return unique elements from array', () => {
+      const testArray = [1, 2, 2, 3, 3, 3, 4];
+      const result = array.unique(testArray);
+      expect(result).toEqual([1, 2, 3, 4]);
+    });
+
+    test('should handle empty array', () => {
+      const result = array.unique([]);
+      expect(result).toEqual([]);
+    });
+
+    test('should handle array with no duplicates', () => {
+      const testArray = [1, 2, 3, 4];
+      const result = array.unique(testArray);
+      expect(result).toEqual([1, 2, 3, 4]);
+    });
+  });
+
   describe('.uniqueBy()', () => {
     test('should return the unique elements based on the key', () => {
       const result = array.uniqueBy(array_,'a');
