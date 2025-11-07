@@ -14,7 +14,7 @@ const TYPES = [
  * @returns {Object} - The type
  */
 const getTypeById = (id) => {
-  return TYPES.find(type => type.id === id);
+  return TYPES.find(type => type.func.id === id)?.func;
 }
 
 /**
@@ -22,7 +22,7 @@ const getTypeById = (id) => {
  * @returns {Object} - The selected type
  */
 const getRandomType = () => {
-  // Build weighted array based on percentages
+  // Build weighted array basetd on percentages
   const weightedTypes = [];
   for (const type of TYPES) {
     const weight = type.weight;

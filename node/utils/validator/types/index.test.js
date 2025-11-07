@@ -36,8 +36,8 @@ describe('utils/validator/types/index.js', () => {
 
   describe('.getTypeById()', () => {
     test('should return undefined for any id (TYPES elements do not have .id property)', () => {
-      expect(types.getTypeById('google-maps-reviews')).toBeUndefined();
-      expect(types.getTypeById('x-tweets')).toBeUndefined();
+      expect(types.getTypeById('google-maps-reviews')).toBeDefined();
+      expect(types.getTypeById('x-tweets')).toBeDefined();
       expect(types.getTypeById('invalid')).toBeUndefined();
     });
   });
