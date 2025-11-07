@@ -4,8 +4,10 @@ import config from '#config';
 import healthRoute from '#routes/validator/health.js';
 import scoreRoute from '#routes/validator/score.js';
 import localhostOnly from '#modules/middlewares/localhost-only.js';
+import platformTokenAuth from '#modules/middlewares/platform-token-auth.js';
 import logger from '#modules/logger/index.js';
 import createSyntheticRoute from '#routes/validator/create-synthetic.js';
+import downloadSynapseDataRoute from '#routes/validator/download-synapse-data.js';
 
 dotenv.config();
 
@@ -14,8 +16,20 @@ const PORT = process.env.VALIDATOR_NODE_PORT || 3002;
 
 // Middleware
 app.use(express.json({ limit: '1gb' }));
+
+/**
+ * Validator Public API endpoints
+ */
+// Download synapse data endpoint
+app.get('/download-synapse-data', platformTokenAuth, downloadSynapseDataRoute.execute);
+
+/**
+ * Validator localhost-only API endpoints
+ */
+// Apply localhost-only middleware to remaining routes
 app.use(localhostOnly);
 
+// Validator localhost-only API endpoints (uses localhost-only middleware)
 // Create synthetic validation tasks with place data
 app.get('/create-synthetic-task', createSyntheticRoute.execute);
 
@@ -29,8 +43,9 @@ app.get('/health', healthRoute.execute);
 app.listen(PORT, () => {
   logger.info('='.repeat(50));
   logger.info(`Node running on port ${PORT}`);
-  logger.info(`Synthetic task endpoint: POST /create-synthetic-task`);
+  logger.info(`Synthetic task endpoint: GET /create-synthetic-task`);
   logger.info(`Scoring endpoint: POST /score-responses`);
+  logger.info(`Download synapse data: GET /download-synapse-data?date=YYYY-MM-DD`);
   logger.info(`Configuration:`);
   logger.info(`  - Spot check validation: ${config.VALIDATOR.SPOT_CHECK_COUNT} reviews per validation`);
   logger.info(`  - Google Reviews synapse parameters:`);

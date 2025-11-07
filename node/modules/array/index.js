@@ -96,8 +96,25 @@ const validateArray = (array, requiredFields) => {
  */
 const unique = (array) => [...new Set(array)];
 
+/**
+ * Remove fields from an array of objects
+ * @param {Array} array - The array to remove fields from
+ * @param {Array} fields - The fields to remove
+ * @returns {Array} - The array with fields removed
+ */
+const removeFields = (array, fields) => {
+  return array.map(item => {
+    const cleanItem = { ...item };
+    for (const field of fields) {
+      delete cleanItem[field];
+    }
+    return cleanItem;
+  });
+}
+
 export default {
   uniqueBy,
   validateArray,
-  unique
+  unique,
+  removeFields
 };

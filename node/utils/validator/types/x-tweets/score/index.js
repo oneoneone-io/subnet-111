@@ -59,7 +59,7 @@ const score = async (responses, metadata, responseTimes, synapseTimeout, minerUI
         validationResult.minerUID,
         verifiedTweetsMap
       );
-
+      
       if (spotCheckPassed) {
         logger.info(`X Tweets - UID ${validationResult.minerUID}: Validation complete - ${validationResult.count} tweets, most recent: ${validationResult.mostRecentDate?.toISOString()}`);
       } else {

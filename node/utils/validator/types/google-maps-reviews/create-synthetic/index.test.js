@@ -2,7 +2,7 @@ import createSyntheticTask from './index.js';
 import random from '#modules/random/index.js';
 import apify from '#modules/apify/index.js';
 import config from '#config';
-import getRandomLocation from '#utils/validator/get-random-location.js';
+import getRandomLocation from './get-random-location.js';
 
 jest.mock('#modules/random/index.js', () => ({
   fromArray: jest.fn()
@@ -16,7 +16,7 @@ jest.mock('#modules/logger/index.js', () => ({
 jest.mock('#modules/time/index.js', () => ({
   getDuration: jest.fn().mockReturnValue(0)
 }));
-jest.mock('#utils/validator/get-random-location.js', () => jest.fn());
+jest.mock('./get-random-location.js', () => jest.fn());
 
 describe('utils/validator/google-maps-reviews/create-synthetic/index.js', () => {
   let selectedPlace;

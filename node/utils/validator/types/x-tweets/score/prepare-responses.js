@@ -185,6 +185,7 @@ const prepareResponses = (
     validationResult.count = tweetsWithKeyword.length;
     validationResult.mostRecentDate = mostRecentDate;
     validationResult.data = selectedTweets;
+    validationResult.allValidatedItems = tweetsWithKeyword;
     validationResult.passedValidation = true;
   }
 

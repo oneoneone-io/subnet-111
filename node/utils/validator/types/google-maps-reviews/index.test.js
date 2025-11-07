@@ -19,6 +19,11 @@ describe('utils/validator/types/google-maps-reviews/index.js', () => {
     expect(googleMapsReviewsValidatorType).toEqual({
       id: 'google-maps-reviews',
       name: 'Google Maps Reviews',
+      s3: {
+        idField: 'reviewId',
+        stripFields: ['reviewId', 'reviewUrl', 'placeId', 'cid', 'fid', 'url'],
+        getS3Identifier: expect.any(Function),
+      },
       createSyntheticTask: expect.any(Function),
       score: expect.any(Function),
       prepareAndSendForDigestion: expect.any(Function)
@@ -33,6 +38,13 @@ describe('utils/validator/types/google-maps-reviews/index.js', () => {
     expect(googleMapsReviewsValidatorType.name).toBe('Google Maps Reviews');
   });
 
+  test('should have the correct s3 structure', () => {
+    expect(googleMapsReviewsValidatorType.s3).toEqual({
+      idField: 'reviewId',
+      stripFields: ['reviewId', 'reviewUrl', 'placeId', 'cid', 'fid', 'url'],
+      getS3Identifier: expect.any(Function),
+    });
+  });
   test('should export createSyntheticTask function', () => {
     expect(typeof googleMapsReviewsValidatorType.createSyntheticTask).toBe('function');
   });

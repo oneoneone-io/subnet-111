@@ -232,18 +232,22 @@ class BaseValidatorNeuron(BaseNeuron):
         # Build uids and scores lists
         uids = self.metagraph.uids.tolist()
         scores = self.scores.tolist()
-        
+
         # Apply miner emission control - ensure burner_uid is in the list
         if self.burner_uid not in uids:
-            bt.logging.debug(f"Inserting burner UID {self.burner_uid} for burn allocation.")
+            bt.logging.debug(
+                f"Inserting burner UID {self.burner_uid} for burn allocation."
+            )
             uids.insert(0, self.burner_uid)
             scores.insert(0, 0.0)
-        
+
         # Log original weights before burner control
         total_scores = sum(scores)
-        original_weights = [score / total_scores if total_scores > 0 else 0.0 for score in scores]
+        original_weights = [
+            score / total_scores if total_scores > 0 else 0.0 for score in scores
+        ]
         bt.logging.debug(f"Original weights before burner: {original_weights}")
-        
+
         # Calculate weights with burner control
         raw_weights = self._calculate_weights_with_burner(uids, scores)
 
@@ -291,10 +295,12 @@ class BaseValidatorNeuron(BaseNeuron):
     def _calculate_weights_with_burner(self, uids, scores):
         """Calculate weights with burner emission control."""
         remaining_weight = 1.0 - self.burner_weight
-        
+
         # Calculate total score excluding burner UID
-        total_other_scores = sum(score for uid, score in zip(uids, scores) if uid != self.burner_uid)
-        
+        total_other_scores = sum(
+            score for uid, score in zip(uids, scores) if uid != self.burner_uid
+        )
+
         # Calculate weights
         weights = []
         for uid, score in zip(uids, scores):
@@ -304,8 +310,10 @@ class BaseValidatorNeuron(BaseNeuron):
                 weights.append((score / total_other_scores) * remaining_weight)
             else:
                 weights.append(0.0)
-        
-        bt.logging.debug(f"Applied miner emission control: burner_uid={self.burner_uid}, burner_weight={self.burner_weight}")
+
+        bt.logging.debug(
+            f"Applied miner emission control: burner_uid={self.burner_uid}, burner_weight={self.burner_weight}"
+        )
         return weights
 
     def resync_metagraph(self):

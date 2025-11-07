@@ -4,6 +4,8 @@ import time from '#modules/time/index.js';
 import logger from '#modules/logger/index.js';
 import calculateFinalScores from '#utils/validator/calculate-final-scores.js';
 import Types from '#utils/validator/types/index.js';
+import uploadToS3 from '#utils/validator/upload-to-s3.js';
+import sendMetadata from '#utils/validator/send-metadata.js';
 
 jest.mock('#modules/response/index.js', () => ({
   success: jest.fn(),
@@ -25,6 +27,10 @@ jest.mock('#utils/validator/calculate-final-scores.js', () => jest.fn());
 jest.mock('#utils/validator/types/index.js', () => ({
   getTypeById: jest.fn(),
 }));
+
+jest.mock('#utils/validator/upload-to-s3.js', () => jest.fn());
+
+jest.mock('#utils/validator/send-metadata.js', () => jest.fn());
 
 describe('routes/validator/score.js', () => {
   let timestamp;
@@ -530,6 +536,86 @@ describe('routes/validator/score.js', () => {
         timestamp,
         detailedResults: validationResults
       });
+    });
+
+    test('should use S3 upload path when S3_ENABLED is true', async () => {
+      const originalS3Enabled = process.env.S3_ENABLED;
+      process.env.S3_ENABLED = 'true';
+
+      const validationResults = [{ minerUID: 1, score: 0.8 }];
+      selectedType.score.mockResolvedValue(validationResults);
+
+      uploadToS3.mockResolvedValue({
+        totalItemCount: 10,
+        s3Bucket: 'test-bucket',
+        s3Path: 'test/path.json'
+      });
+
+      await scoreRoute.execute(request, response);
+
+      expect(uploadToS3).toHaveBeenCalledWith(validationResults, metadata, selectedType);
+      expect(sendMetadata).toHaveBeenCalledWith(
+        'google-maps-reviews',
+        metadata,
+        10,
+        'test-bucket',
+        'test/path.json'
+      );
+      expect(selectedType.prepareAndSendForDigestion).not.toHaveBeenCalled();
+
+      process.env.S3_ENABLED = originalS3Enabled;
+    });
+
+    test('should use legacy digestion path when S3_ENABLED is not true', async () => {
+      const originalS3Enabled = process.env.S3_ENABLED;
+      process.env.S3_ENABLED = 'false';
+
+      await scoreRoute.execute(request, response);
+
+      expect(uploadToS3).not.toHaveBeenCalled();
+      expect(sendMetadata).not.toHaveBeenCalled();
+      expect(selectedType.prepareAndSendForDigestion).toHaveBeenCalledWith([], [], metadata);
+
+      process.env.S3_ENABLED = originalS3Enabled;
+    });
+
+    test('should return internalServerError if uploadToS3 throws error', async () => {
+      const originalS3Enabled = process.env.S3_ENABLED;
+      process.env.S3_ENABLED = 'true';
+
+      uploadToS3.mockRejectedValue(new Error('S3 upload failed'));
+
+      await scoreRoute.execute(request, response);
+
+      expect(responseService.internalServerError).toHaveBeenCalledWith(response, {
+        error: 'Failed to score responses',
+        message: 'S3 upload failed',
+        timestamp
+      });
+
+      process.env.S3_ENABLED = originalS3Enabled;
+    });
+
+    test('should return internalServerError if sendMetadata throws error', async () => {
+      const originalS3Enabled = process.env.S3_ENABLED;
+      process.env.S3_ENABLED = 'true';
+
+      uploadToS3.mockResolvedValue({
+        totalItemCount: 10,
+        s3Bucket: 'test-bucket',
+        s3Path: 'test/path.json'
+      });
+      sendMetadata.mockRejectedValue(new Error('Metadata send failed'));
+
+      await scoreRoute.execute(request, response);
+
+      expect(responseService.internalServerError).toHaveBeenCalledWith(response, {
+        error: 'Failed to score responses',
+        message: 'Metadata send failed',
+        timestamp
+      });
+
+      process.env.S3_ENABLED = originalS3Enabled;
     });
   });
 });

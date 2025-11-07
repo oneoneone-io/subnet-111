@@ -19,6 +19,11 @@ describe('utils/validator/types/x-tweets/index.js', () => {
     expect(xTweetsValidatorType).toEqual({
       id: 'x-tweets',
       name: 'X Tweets',
+      s3: {
+        idField: 'tweetId',
+        stripFields: ['tweetId', 'tweetUrl', 'userId'],
+        getS3Identifier: expect.any(Function),
+      },
       createSyntheticTask: expect.any(Function),
       score: expect.any(Function),
       prepareAndSendForDigestion: expect.any(Function)
@@ -33,6 +38,13 @@ describe('utils/validator/types/x-tweets/index.js', () => {
     expect(xTweetsValidatorType.name).toBe('X Tweets');
   });
 
+  test('should have the correct s3 structure', () => {
+    expect(xTweetsValidatorType.s3).toEqual({
+      idField: 'tweetId',
+      stripFields: ['tweetId', 'tweetUrl', 'userId'],
+      getS3Identifier: expect.any(Function),
+    });
+  });
   test('should export createSyntheticTask function', () => {
     expect(typeof xTweetsValidatorType.createSyntheticTask).toBe('function');
   });
