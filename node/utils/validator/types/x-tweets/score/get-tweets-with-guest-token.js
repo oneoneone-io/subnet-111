@@ -102,10 +102,14 @@ async function getTweetsWithGuestToken(tweetIds){
   // Generate guest token once for all requests
   const headers = await generateGuestTokenHeaders();
 
+  const results = [];
   // Make API calls using guest token
-  const promises = tweetIds.map(async (tweetId) => {
+  for(const tweetId of tweetIds){
+    // Wait for 1 second to avoid rate limiting
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     try {
-      const data = await retryable(async () => {
+      const result = await retryable(async () => {
         const guestData = await fetchTweetWithGuestToken(tweetId, headers);
         const parsed = parseGuestTokenResponse(guestData);
         if (!parsed) {
@@ -114,13 +118,13 @@ async function getTweetsWithGuestToken(tweetIds){
         return parsed;
       }, 3);
 
-      return data;
+      results.push(result);
     } catch (error) {
       logger.warning(`X Tweets - Error fetching tweet ${tweetId} with guest token after retries:`, error.message);
       return;
     }
-  });
+  }
 
-  return Promise.all(promises);
+  return results;
 }
 export default getTweetsWithGuestToken;

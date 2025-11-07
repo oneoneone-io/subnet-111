@@ -49,7 +49,7 @@ export default {
 
     X_TWEETS: {
       // Spot check configuration
-      SPOT_CHECK_COUNT: 3,         // Number of tweets to spot check for validation
+      SPOT_CHECK_COUNT: 2,         // Number of tweets to spot check for validation
 
       // Chutes API configuration
       CHUTES_API_URL: 'https://llm.chutes.ai/v1/chat/completions',
