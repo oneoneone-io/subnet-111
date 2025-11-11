@@ -66,7 +66,12 @@ export default {
       // Synapse configurations
       TWEETS_SYNAPSE_PARAMS: {
         timeout: 120
-      }
+      },
+
+      // Apify actor names
+      APIFY_ACTORS: {
+        SPOT_CHECK: 'apidojo/tweet-scraper'
+      },
     }
   },
   MINER: {

@@ -11,6 +11,11 @@ export default {
         stripFields: ['reviewId', 'reviewUrl', 'placeId', 'cid', 'fid', 'url'],
         getS3Identifier,
     },
+    scoreConstants: {
+        SPEED: 0.3,
+        VOLUME: 0.5,
+        RECENCY: 0.2,
+    },
     createSyntheticTask, // This is the function that creates the synthetic task metadata
     score, // This is the function that scores the synthetic task
     prepareAndSendForDigestion // This is the function that prepares and sends the data for digestion

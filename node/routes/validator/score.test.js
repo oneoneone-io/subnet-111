@@ -49,6 +49,11 @@ describe('routes/validator/score.js', () => {
       name: 'Google Maps Reviews',
       score: jest.fn(),
       prepareAndSendForDigestion: jest.fn(),
+      scoreConstants: {
+        SPEED: 0.3,
+        VOLUME: 0.5,
+        RECENCY: 0.2,
+      },
     };
 
     // Reset all mocks
@@ -384,7 +389,7 @@ describe('routes/validator/score.js', () => {
 
       await scoreRoute.execute(request, response);
 
-      expect(calculateFinalScores).toHaveBeenCalledWith('Google Maps Reviews', validationResults, 120);
+      expect(calculateFinalScores).toHaveBeenCalledWith(selectedType, validationResults, 120);
     });
 
     test('should call prepareAndSendForDigestion with correct parameters', async () => {

@@ -2,7 +2,7 @@ import logger from '#modules/logger/index.js';
 import time from '#modules/time/index.js';
 import array from '#modules/array/index.js';
 import performBatchSpotCheck from './perform-batch-spot-check.js';
-import getTweetsWithGuestToken from './get-tweets-with-guest-token.js';
+import getTweetsFromApify from './get-tweets-from-apify.js';
 import getTweetsFromDesearch from './get-tweets-from-desearch.js';
 
 jest.mock('#modules/logger/index.js', () => ({
@@ -14,7 +14,7 @@ jest.mock('#modules/time/index.js', () => ({
   getDuration: jest.fn(),
 }));
 jest.mock('#modules/array/index.js');
-jest.mock('./get-tweets-with-guest-token.js');
+jest.mock('./get-tweets-from-apify.js');
 jest.mock('./get-tweets-from-desearch.js');
 
 describe('#utils/validator/types/x-tweets/score/perform-batch-spot-check.js', () => {
@@ -78,8 +78,8 @@ describe('#utils/validator/types/x-tweets/score/perform-batch-spot-check.js', ()
     expect(result.size).toBe(3);
   });
 
-  test('should perform batch spot check successfully with Guest Token', async () => {
-    process.env.USE_GUEST_TOKEN = 'true';
+  test('should perform batch spot check successfully with Apify', async () => {
+    process.env.X_USE_APIFY_TO_SPOT_CHECK = 'true';
 
     const selectedSpotCheckTweets = [
       {
@@ -96,21 +96,21 @@ describe('#utils/validator/types/x-tweets/score/perform-batch-spot-check.js', ()
     // Mock array.unique to return unique tweet IDs
     array.unique.mockReturnValue(['1', '2']);
 
-    // Mock getTweetsWithGuestToken to return successful responses
+    // Mock getTweetsFromApify to return successful responses
     const mockVerifiedTweets = [
       { id: '1', text: 'Tweet 1', user: { username: 'user1' } },
       { id: '2', text: 'Tweet 2', user: { username: 'user2' } }
     ];
 
-    getTweetsWithGuestToken.mockResolvedValue(mockVerifiedTweets);
+    getTweetsFromApify.mockResolvedValue(mockVerifiedTweets);
 
     const result = await performBatchSpotCheck(selectedSpotCheckTweets, keyword);
 
     expect(array.unique).toHaveBeenCalledWith(['1', '2']);
     expect(logger.info).toHaveBeenCalledWith(
-      'X Tweets - Batch spot check (Guest Token): Verifying 2 unique tweets from 1 miners for keyword: "test-keyword"'
+      'X Tweets - Batch spot check (Apify): Verifying 2 unique tweets from 1 miners for keyword: "test-keyword"'
     );
-    expect(getTweetsWithGuestToken).toHaveBeenCalledWith(['1', '2']);
+    expect(getTweetsFromApify).toHaveBeenCalledWith(['1', '2']);
     expect(logger.info).toHaveBeenCalledWith(
       'X Tweets - Batch spot check complete: Verified 2/2 tweets in 2.50s'
     );

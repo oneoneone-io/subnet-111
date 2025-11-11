@@ -11,6 +11,11 @@ export default {
         stripFields: ['tweetId', 'tweetUrl', 'userId'],
         getS3Identifier,
     },
+    scoreConstants: {
+        SPEED: 0.1,
+        VOLUME: 0.7,
+        RECENCY: 0.2,
+    },
     createSyntheticTask, // This is the function that creates the synthetic task metadata
     score, // This is the function that scores the synthetic task
     prepareAndSendForDigestion // This is the function that prepares and sends the data for digestion

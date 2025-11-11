@@ -24,6 +24,11 @@ describe('utils/validator/types/x-tweets/index.js', () => {
         stripFields: ['tweetId', 'tweetUrl', 'userId'],
         getS3Identifier: expect.any(Function),
       },
+      scoreConstants: {
+        SPEED: 0.1,
+        VOLUME: 0.7,
+        RECENCY: 0.2,
+      },
       createSyntheticTask: expect.any(Function),
       score: expect.any(Function),
       prepareAndSendForDigestion: expect.any(Function)

@@ -1,7 +1,7 @@
 import logger from '#modules/logger/index.js';
 import time from '#modules/time/index.js';
 import array from '#modules/array/index.js';
-import getTweetsWithGuestToken from './get-tweets-with-guest-token.js';
+import getTweetsFromApify from './get-tweets-from-apify.js';
 import getTweetsFromDesearch from './get-tweets-from-desearch.js';
 
 /**
@@ -15,7 +15,7 @@ import getTweetsFromDesearch from './get-tweets-from-desearch.js';
  */
 const performBatchSpotCheck = async (selectedSpotCheckTweets, keyword) => {
   const startTime = Date.now();
-  const useGuestToken = process.env.USE_GUEST_TOKEN === 'true';
+  const useApifyToSpotCheck = process.env.X_USE_APIFY_TO_SPOT_CHECK === 'true';
 
   try {
     // Collect all unique tweet IDs from all miners
@@ -25,10 +25,10 @@ const performBatchSpotCheck = async (selectedSpotCheckTweets, keyword) => {
       )
     );
 
-    const method = useGuestToken ? 'Guest Token' : 'Desearch';
+    const method = useApifyToSpotCheck ? 'Apify' : 'Desearch';
     logger.info(`X Tweets - Batch spot check (${method}): Verifying ${tweetIds.length} unique tweets from ${selectedSpotCheckTweets.length} miners for keyword: ${keyword}`);
 
-    const results = await (useGuestToken ? getTweetsWithGuestToken(tweetIds) : getTweetsFromDesearch(tweetIds));
+    const results = await (useApifyToSpotCheck ? getTweetsFromApify(tweetIds) : getTweetsFromDesearch(tweetIds));
 
     // Filter out failed results and create a map of verified tweets by tweetId
     const verifiedTweets = new Map();

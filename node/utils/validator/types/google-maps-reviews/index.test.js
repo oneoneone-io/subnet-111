@@ -24,6 +24,11 @@ describe('utils/validator/types/google-maps-reviews/index.js', () => {
         stripFields: ['reviewId', 'reviewUrl', 'placeId', 'cid', 'fid', 'url'],
         getS3Identifier: expect.any(Function),
       },
+      scoreConstants: {
+        SPEED: 0.3,
+        VOLUME: 0.5,
+        RECENCY: 0.2,
+      },
       createSyntheticTask: expect.any(Function),
       score: expect.any(Function),
       prepareAndSendForDigestion: expect.any(Function)

@@ -119,7 +119,7 @@ const execute = async(request, response) => {
     const validationResults = await selectedType.score(responses, metadata, responseTimes, synapseTimeout, minerUIDs, typeId);
 
     // Create final scores and statistics
-    const { statistics, finalScores } = calculateFinalScores(selectedType.name, validationResults, synapseTimeout);
+    const { statistics, finalScores } = calculateFinalScores(selectedType, validationResults, synapseTimeout);
 
     // Return scoring results with statistics
     const result = output({ metadata, typeId, typeName: selectedType.name, statistics, finalScores });
