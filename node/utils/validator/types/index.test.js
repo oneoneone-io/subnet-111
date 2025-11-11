@@ -44,27 +44,27 @@ describe('utils/validator/types/index.js', () => {
 
   describe('.getRandomType()', () => {
     test('should return GoogleMapsReviews when selected', () => {
-      random.fromArray.mockReturnValue({ func: GoogleMapsReviews, weight: 25 });
+      random.fromArray.mockReturnValue({ func: GoogleMapsReviews, weight: 20 });
 
       const result = types.getRandomType();
 
       expect(result).toBe(GoogleMapsReviews);
       expect(random.fromArray).toHaveBeenCalled();
-      expect(logger.info).toHaveBeenCalledWith('Type selection: Google Maps Reviews (weights: 25)');
+      expect(logger.info).toHaveBeenCalledWith('Type selection: Google Maps Reviews (weights: 20)');
     });
 
     test('should return XTweets when selected', () => {
-      random.fromArray.mockReturnValue({ func: XTweets, weight: 75 });
+      random.fromArray.mockReturnValue({ func: XTweets, weight: 80 });
 
       const result = types.getRandomType();
 
       expect(result).toBe(XTweets);
       expect(random.fromArray).toHaveBeenCalled();
-      expect(logger.info).toHaveBeenCalledWith('Type selection: X Tweets (weights: 75)');
+      expect(logger.info).toHaveBeenCalledWith('Type selection: X Tweets (weights: 80)');
     });
 
-    test('should build weighted array with 100 total items (25 + 75)', () => {
-      random.fromArray.mockReturnValue({ func: XTweets, weight: 75 });
+    test('should build weighted array with 100 total items (20 + 80)', () => {
+      random.fromArray.mockReturnValue({ func: XTweets, weight: 80 });
 
       types.getRandomType();
 
@@ -75,8 +75,8 @@ describe('utils/validator/types/index.js', () => {
       const googleMapsCount = weightedArray.filter(t => t.func === GoogleMapsReviews).length;
       const xTweetsCount = weightedArray.filter(t => t.func === XTweets).length;
 
-      expect(googleMapsCount).toBe(25);
-      expect(xTweetsCount).toBe(75);
+      expect(googleMapsCount).toBe(20);
+      expect(xTweetsCount).toBe(80);
     });
   });
 });

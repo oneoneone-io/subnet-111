@@ -144,15 +144,15 @@ class Miner(BaseMinerNeuron):
         caller_stake = self.metagraph.total_stake[uid]
         bt.logging.debug(f"Validator neuron total stake: {caller_stake}")
 
-        # if caller_stake < float(VALIDATOR_MIN_STAKE):
-        #     bt.logging.warning(
-        #         f"Blacklisting hotkey: {synapse.dendrite.hotkey} with insufficient stake, minimum stake required: {VALIDATOR_MIN_STAKE}, current stake: {caller_stake}"
-        #     )
-        #     return True, "Insufficient validator stake"
+        if caller_stake < float(VALIDATOR_MIN_STAKE):
+            bt.logging.warning(
+                f"Blacklisting hotkey: {synapse.dendrite.hotkey} with insufficient stake, minimum stake required: {VALIDATOR_MIN_STAKE}, current stake: {caller_stake}"
+            )
+            return True, "Insufficient validator stake"
 
-        # bt.logging.trace(
-        #     f"Not blacklisting recognized hotkey {synapse.dendrite.hotkey}"
-        # )
+        bt.logging.trace(
+            f"Not blacklisting recognized hotkey {synapse.dendrite.hotkey}"
+        )
         return False, "Hotkey recognized!"
 
     async def priority(self, synapse: oneoneone.protocol.GenericSynapse) -> float:
