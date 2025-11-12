@@ -260,7 +260,7 @@ describe('#utils/validator/google-maps/score/prepare-responses.js', () => {
       minerUIDs = ['miner1'];
       responseTimes = [100];
       synapseTimeout = 5000;
-      metadata = { fid: 'facility123' };
+      metadata = { dataId: 'facility123' };
 
       mockValidationResults = [
         {
@@ -412,7 +412,7 @@ describe('#utils/validator/google-maps/score/prepare-responses.js', () => {
         return { valid, invalid };
       });
 
-      const result = prepareResponses([reviews], minerUIDs, responseTimes, synapseTimeout, { fid: expectedFid }, 'google-maps-reviews');
+      const result = prepareResponses([reviews], minerUIDs, responseTimes, synapseTimeout, { dataId: expectedFid }, 'google-maps-reviews');
 
       // Only the first review should pass validation, but since we have invalid reviews, the whole response fails
       expect(result[0]).toMatchObject({

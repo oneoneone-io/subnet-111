@@ -193,6 +193,7 @@ const prepareResponses = (
     validationResult.count = validReviews.length;
     validationResult.mostRecentDate = mostRecentDate;
     validationResult.data = selectedReviews;
+    validationResult.allValidatedItems = validReviews;
     validationResult.passedValidation = true;
   }
 

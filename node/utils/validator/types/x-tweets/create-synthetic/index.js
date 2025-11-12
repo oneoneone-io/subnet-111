@@ -4,7 +4,7 @@ import time from '#modules/time/index.js';
 import random from '#modules/random/index.js';
 import retryFetch from '#modules/retry-fetch/index.js';
 
-const KEYWORD_GENERATION_PROMPT = `Generate a list of 50 real, diverse, and unpredictable keywords suitable for tweet searches.
+const KEYWORD_GENERATION_PROMPT_GENERAL = `Generate a list of 50 real, diverse, and unpredictable keywords suitable for tweet searches.
 
 Rules:
 1. All keywords must be real (from language, culture, or history) so they can actually appear in tweets.
@@ -33,11 +33,70 @@ Rules:
   "senate hearing"
 ]`;
 
+const KEYWORD_GENERATION_PROMPT_POLITICS = `Generate a list of 50 real, diverse political keywords suitable for tweet searches.
+
+Rules:
+1. All keywords must be real political topics, figures, or events that appear in tweets.
+2. Include a balanced variety:
+   - political figures (historical and contemporary)
+   - political parties and ideologies
+   - government institutions (senate, parliament, congress)
+   - political events and movements
+   - policy topics (healthcare, taxation, immigration)
+   - international relations and diplomacy
+   - elections and campaigns
+3. Keep all keywords safe: no hate speech or inflammatory content.
+4. Keywords should be short (1–3 words).
+5. Return as a JSON array of strings, nothing else, exactly 50 items.
+6. Example format:
+[
+  "senate hearing",
+  "diplomacy",
+  "electoral college",
+  "referendum",
+  "bipartisan"
+]`;
+
+const KEYWORD_GENERATION_PROMPT_SCIENCE = `Generate a list of 50 real, diverse science keywords suitable for tweet searches.
+
+Rules:
+1. All keywords must be real scientific topics, concepts, or discoveries.
+2. Include a balanced variety:
+   - physics and astronomy
+   - biology and medicine
+   - chemistry and materials
+   - earth sciences and climate
+   - mathematics and computing
+   - space exploration
+   - scientific methods and tools
+   - notable scientists and discoveries
+3. Avoid extremely common terms (e.g., "DNA", "atom", "gravity").
+4. Keywords should be short (1–3 words).
+5. Return as a JSON array of strings, nothing else, exactly 50 items.
+6. Example format:
+[
+  "quantum entanglement",
+  "crispr",
+  "supernova",
+  "mitochondria",
+  "photosynthesis"
+]`;
+
+// Array of all prompts to randomly choose from
+const KEYWORD_PROMPTS = [
+  KEYWORD_GENERATION_PROMPT_GENERAL,
+  KEYWORD_GENERATION_PROMPT_POLITICS,
+  KEYWORD_GENERATION_PROMPT_SCIENCE
+];
+
 /**
  * Call Chutes API to generate keywords
  * @returns {Promise<Array<string>>} - Array of keywords
  */
 async function generateKeywordsFromChutes() {
+  // Randomly select a prompt theme
+  const selectedPrompt = random.fromArray(KEYWORD_PROMPTS);
+  
   const model = random.fromArray(config.VALIDATOR.X_TWEETS.CHUTES_MODELS);
   const response = await retryFetch(config.VALIDATOR.X_TWEETS.CHUTES_API_URL, {
     method: 'POST',
@@ -50,7 +109,7 @@ async function generateKeywordsFromChutes() {
       messages: [
         {
           role: 'user',
-          content: KEYWORD_GENERATION_PROMPT
+          content: selectedPrompt
         }
       ],
       stream: false,

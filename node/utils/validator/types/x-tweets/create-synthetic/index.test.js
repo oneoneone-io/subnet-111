@@ -47,6 +47,8 @@ describe('utils/validator/types/x-tweets/create-synthetic/index.js', () => {
 
   test('should create synthetic task successfully', async () => {
     const mockKeywords = ['bitcoin', 'ethereum', 'crypto', 'blockchain', 'defi'];
+    const mockPrompt = 'Generate a list of 50 real, diverse, and unpredictable keywords';
+    const mockModel = 'gpt-4';
     const mockSelectedKeyword = 'bitcoin';
     const mockResponse = {
       ok: true,
@@ -61,7 +63,11 @@ describe('utils/validator/types/x-tweets/create-synthetic/index.js', () => {
 
     process.env.CHUTES_API_TOKEN = 'test-token';
     retryFetch.mockResolvedValue(mockResponse);
-    random.fromArray.mockReturnValue(mockSelectedKeyword);
+    // random.fromArray is called 3 times: for prompt, model, and keyword
+    random.fromArray
+      .mockReturnValueOnce(mockPrompt)
+      .mockReturnValueOnce(mockModel)
+      .mockReturnValueOnce(mockSelectedKeyword);
 
     const result = await createSyntheticTask();
 
@@ -73,11 +79,11 @@ describe('utils/validator/types/x-tweets/create-synthetic/index.js', () => {
           'Authorization': 'Bearer test-token',
           'Content-Type': 'application/json'
         },
-        body: expect.stringContaining('Generate a list of 50 real, diverse, and unpredictable keywords')
+        body: expect.stringContaining(mockPrompt)
       })
     );
 
-    expect(random.fromArray).toHaveBeenCalledWith(mockKeywords);
+    expect(random.fromArray).toHaveBeenCalledTimes(3);
     expect(logger.info).toHaveBeenCalledWith('X Tweets - Creating synthetic task');
     expect(logger.info).toHaveBeenCalledWith('X Tweets - Calling Chutes API to generate keywords');
     expect(logger.info).toHaveBeenCalledWith(`X Tweets - Generated ${mockKeywords.length} keywords from Chutes API`);
@@ -93,6 +99,8 @@ describe('utils/validator/types/x-tweets/create-synthetic/index.js', () => {
 
   test('should handle markdown code blocks in response', async () => {
     const mockKeywords = ['test', 'keyword'];
+    const mockPrompt = 'Generate a list of 50 real, diverse, and unpredictable keywords';
+    const mockModel = 'gpt-4';
     const mockResponse = {
       ok: true,
       json: jest.fn().mockResolvedValue({
@@ -106,7 +114,10 @@ describe('utils/validator/types/x-tweets/create-synthetic/index.js', () => {
 
     process.env.CHUTES_API_TOKEN = 'test-token';
     retryFetch.mockResolvedValue(mockResponse);
-    random.fromArray.mockReturnValue('test');
+    random.fromArray
+      .mockReturnValueOnce(mockPrompt)
+      .mockReturnValueOnce(mockModel)
+      .mockReturnValueOnce('test');
 
     const result = await createSyntheticTask();
 
@@ -115,6 +126,8 @@ describe('utils/validator/types/x-tweets/create-synthetic/index.js', () => {
 
   test('should handle code blocks without json marker', async () => {
     const mockKeywords = ['test', 'keyword'];
+    const mockPrompt = 'Generate a list of 50 real, diverse, and unpredictable keywords';
+    const mockModel = 'gpt-4';
     const mockResponse = {
       ok: true,
       json: jest.fn().mockResolvedValue({
@@ -128,7 +141,10 @@ describe('utils/validator/types/x-tweets/create-synthetic/index.js', () => {
 
     process.env.CHUTES_API_TOKEN = 'test-token';
     retryFetch.mockResolvedValue(mockResponse);
-    random.fromArray.mockReturnValue('test');
+    random.fromArray
+      .mockReturnValueOnce(mockPrompt)
+      .mockReturnValueOnce(mockModel)
+      .mockReturnValueOnce('test');
 
     const result = await createSyntheticTask();
 

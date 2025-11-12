@@ -3,7 +3,7 @@ import logger from '#modules/logger/index.js';
 import time from '#modules/time/index.js';
 import random from '#modules/random/index.js';
 import apify from '#modules/apify/index.js';
-import getRandomLocation from '#utils/validator/get-random-location.js';
+import getRandomLocation from './get-random-location.js';
 
 /**
  * Create a synthetic task for Google Maps
@@ -67,6 +67,7 @@ const createSyntheticTask = async () => {
   const metadata = {
     dataId: selectedPlace.fid,
     id: selectedPlace.placeId,
+    name: selectedPlace.name,
     language: config.VALIDATOR.GOOGLE_MAPS_REVIEWS.REVIEWS_SYNAPSE_PARAMS.language,
     sort: config.VALIDATOR.GOOGLE_MAPS_REVIEWS.REVIEWS_SYNAPSE_PARAMS.sort,
   }

@@ -9,10 +9,11 @@ import { createEmptyValidationResult } from '#utils/validator/validation-result.
  * - Recency Score (20%): Based on most recent review date
  *
  * @param {Array} validationResults - Array of validation data with metrics
+ * @param {Object} selectedType - The selected type object
  * @param {number} synapseTimeout - The synapse timeout value in seconds
  * @returns {Array} Final scores for each miner
  */
-const calculateFinalScores = (typeName, validationResults, synapseTimeout = 120) => {
+const calculateFinalScores = (selectedType, validationResults, synapseTimeout = 120) => {
   // Calculate minimums and maximums for normalization
   const validResults = validationResults.filter(validationResult =>
     validationResult.passedValidation
@@ -22,7 +23,7 @@ const calculateFinalScores = (typeName, validationResults, synapseTimeout = 120)
 
   // If no valid results, return the scoring results with 0 scores
   if (validResults.length === 0) {
-    logger.warning(`${typeName} - No valid results to score`);
+    logger.warning(`${selectedType.name} - No valid results to score`);
     const finalScores = validationResults.map((validationResult) => createEmptyValidationResult({
       minerUID: validationResult.minerUID,
       responseTime: validationResult.responseTime,
@@ -56,7 +57,7 @@ const calculateFinalScores = (typeName, validationResults, synapseTimeout = 120)
   const dateRange = mostRecentDateOverall && oldestDateOverall ?
     (mostRecentDateOverall.getTime() - oldestDateOverall.getTime()) : 0;
 
-  logger.info(`${typeName} - Scoring parameters - Tmin: ${Tmin.toFixed(2)}s, Vmax: ${Vmax} reviews, Date range: ${dateRange / (1000 * 60 * 60 * 24)} days`);
+  logger.info(`${selectedType.name} - Scoring parameters - Tmin: ${Tmin.toFixed(2)}s, Vmax: ${Vmax} reviews, Date range: ${dateRange / (1000 * 60 * 60 * 24)} days`);
 
   const finalScores = validationResults.map((validationResult) => {
     // Reject if validation fails or response time >= synapseTimeout
@@ -88,7 +89,7 @@ const calculateFinalScores = (typeName, validationResults, synapseTimeout = 120)
     }
 
     // Final score is weighted average of all components
-    let finalScore = (0.3 * speedScore) + (0.5 * volumeScore) + (0.2 * recencyScore);
+    let finalScore = (selectedType.scoreConstants.SPEED * speedScore) + (selectedType.scoreConstants.VOLUME * volumeScore) + (selectedType.scoreConstants.RECENCY * recencyScore);
 
     // Float the values to remove potential numerical imprecision
     finalScore = Number.parseFloat(finalScore);
@@ -97,7 +98,7 @@ const calculateFinalScores = (typeName, validationResults, synapseTimeout = 120)
     recencyScore = Number.parseFloat(recencyScore);
     validationResult.responseTime = Number.parseFloat(validationResult.responseTime);
 
-    logger.info(`${typeName} - Miner ${validationResult.minerUID} Final Score: ${finalScore.toFixed(4)} - Speed: ${speedScore.toFixed(4)} (${validationResult.responseTime.toFixed(2)}s), Volume: ${volumeScore.toFixed(4)} (${validationResult.count} reviews), Recency: ${recencyScore.toFixed(4)}`);
+    logger.info(`${selectedType.name} - Miner ${validationResult.minerUID} Final Score: ${finalScore.toFixed(4)} - Speed: ${speedScore.toFixed(4)} (${validationResult.responseTime.toFixed(2)}s), Volume: ${volumeScore.toFixed(4)} (${validationResult.count} reviews), Recency: ${recencyScore.toFixed(4)}`);
 
     validationResult.score = Number.parseFloat(finalScore.toFixed(4));
     validationResult.components = {
@@ -116,7 +117,7 @@ const calculateFinalScores = (typeName, validationResults, synapseTimeout = 120)
   // Calculate the mean score
    /* istanbul ignore next */
   const meanScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
-  logger.info(`${typeName} - Scoring complete - Mean: ${meanScore.toFixed(4)}, Scores: [${scores.map(s => s.toFixed(4)).join(', ')}]`);
+  logger.info(`${selectedType.name} - Scoring complete - Mean: ${meanScore.toFixed(4)}, Scores: [${scores.map(s => s.toFixed(4)).join(', ')}]`);
 
   /* istanbul ignore next */
   return {

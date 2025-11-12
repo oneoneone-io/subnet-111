@@ -16,7 +16,14 @@ jest.mock('#modules/time/index.js', () => ({
 describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
   let validationResults;
   const synapseTimeout = 120;
-  const typeName = 'TestType';
+  const selectedType = {
+    name: 'TestType',
+    scoreConstants: {
+      SPEED: 0.3,
+      VOLUME: 0.5,
+      RECENCY: 0.2
+    }
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -45,7 +52,7 @@ describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
   });
 
   test('should calculate scores correctly for valid results', () => {
-    const result = calculateFinalScores(typeName, validationResults, synapseTimeout);
+    const result = calculateFinalScores(selectedType, validationResults, synapseTimeout);
 
     expect(result.statistics.count).toBe(2);
     expect(result.statistics.mean).toBeDefined();
@@ -74,7 +81,7 @@ describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
     validationResults[0].passedValidation = false;
     validationResults[0].validationError = 'Test error';
 
-    const result = calculateFinalScores(typeName, validationResults, synapseTimeout);
+    const result = calculateFinalScores(selectedType, validationResults, synapseTimeout);
 
     expect(result.finalScores[0].score).toBe(0);
     expect(result.finalScores[0].validationError).toBe('Test error');
@@ -86,7 +93,7 @@ describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
   test('should handle timeout responses', () => {
     validationResults[0].responseTime = synapseTimeout;
 
-    const result = calculateFinalScores(typeName, validationResults, synapseTimeout);
+    const result = calculateFinalScores(selectedType, validationResults, synapseTimeout);
 
     expect(result.finalScores[0].score).toBe(0);
     expect(result.finalScores[0].validationError).toContain('Response timeout');
@@ -101,7 +108,7 @@ describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
       passedValidation: false,
     }));
 
-    const result = calculateFinalScores(typeName, validationResults, synapseTimeout);
+    const result = calculateFinalScores(selectedType, validationResults, synapseTimeout);
 
     expect(result.finalScores).toHaveLength(2);
     expect(result.finalScores[0].score).toBe(0);
@@ -112,7 +119,7 @@ describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
     expect(result.statistics.mean).toBe(0);
     expect(result.statistics.min).toBe(0);
     expect(result.statistics.max).toBe(0);
-    expect(logger.warning).toHaveBeenCalledWith(`${typeName} - No valid results to score`);
+    expect(logger.warning).toHaveBeenCalledWith(`${selectedType.name} - No valid results to score`);
   });
 
   test('should handle same dates for all miners', () => {
@@ -124,7 +131,7 @@ describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
     time.getMostRecentDate.mockReturnValue(new Date('2024-03-20T10:00:00Z'));
     time.getOldestDate.mockReturnValue(new Date('2024-03-20T10:00:00Z'));
 
-    const result = calculateFinalScores(typeName, validationResults, synapseTimeout);
+    const result = calculateFinalScores(selectedType, validationResults, synapseTimeout);
 
     // Both miners should get full recency score since they have the same date
     expect(result.finalScores[0].components.recencyScore).toBe(1);
@@ -134,7 +141,7 @@ describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
   test('should handle response time timeout for individual miners', () => {
     validationResults[1].responseTime = synapseTimeout; // Second miner times out
 
-    const result = calculateFinalScores(typeName, validationResults, synapseTimeout);
+    const result = calculateFinalScores(selectedType, validationResults, synapseTimeout);
 
     expect(result.finalScores[1].score).toBe(0);
     expect(result.finalScores[1].validationError).toContain('Response timeout');
@@ -143,7 +150,7 @@ describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
   test('should handle undefined dates', () => {
     validationResults[0].mostRecentDate = undefined;
 
-    const result = calculateFinalScores(typeName, validationResults, synapseTimeout);
+    const result = calculateFinalScores(selectedType, validationResults, synapseTimeout);
 
     expect(result.finalScores[0].components.recencyScore).toBe(0);
   });
@@ -160,7 +167,7 @@ describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
     validationResults[1].passedValidation = true;
     validationResults[1].responseTime = 0;
 
-    const result = calculateFinalScores(typeName, validationResults, synapseTimeout);
+    const result = calculateFinalScores(selectedType, validationResults, synapseTimeout);
 
     expect(result.finalScores[0].components.recencyScore).toBe(0);
   });
@@ -169,7 +176,7 @@ describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
     time.getMostRecentDate.mockReturnValue(false);
     time.getOldestDate.mockReturnValue(false);
 
-    const result = calculateFinalScores(typeName, validationResults, synapseTimeout);
+    const result = calculateFinalScores(selectedType, validationResults, synapseTimeout);
 
     // When date range is 0 but mostRecentDate exists, miners get full recency score
     expect(result.finalScores[0].components.recencyScore).toBe(1);
@@ -177,7 +184,7 @@ describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
   });
 
   test('should handle empty validation results array', () => {
-    const result = calculateFinalScores(typeName, [], synapseTimeout);
+    const result = calculateFinalScores(selectedType, [], synapseTimeout);
 
     expect(result.finalScores).toHaveLength(0);
     expect(result.statistics.count).toBe(0);
@@ -189,7 +196,7 @@ describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
   test('should handle miners with zero response time', () => {
     validationResults[0].responseTime = 0;
 
-    const result = calculateFinalScores(typeName, validationResults, synapseTimeout);
+    const result = calculateFinalScores(selectedType, validationResults, synapseTimeout);
 
     expect(result.finalScores[0].components.speedScore).toBe(0);
   });
@@ -197,7 +204,7 @@ describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
   test('should handle miners with zero count', () => {
     validationResults[0].count = 0;
 
-    const result = calculateFinalScores(typeName, validationResults, synapseTimeout);
+    const result = calculateFinalScores(selectedType, validationResults, synapseTimeout);
 
     expect(result.finalScores[0].components.volumeScore).toBe(0);
   });
@@ -209,7 +216,7 @@ describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
     validationResults[1].responseTime = 119;
 
     // Call without synapseTimeout parameter to test default value
-    const result = calculateFinalScores(typeName, validationResults);
+    const result = calculateFinalScores(selectedType, validationResults);
 
     // First miner should timeout (responseTime >= 120)
     expect(result.finalScores[0].score).toBe(0);
@@ -235,7 +242,7 @@ describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
       }
     ];
 
-    const result = calculateFinalScores(typeName, validationResults, 120);
+    const result = calculateFinalScores(selectedType, validationResults, 120);
 
     expect(result.finalScores[0].validationError).toBe('No valid responses');
     expect(result.finalScores[0].score).toBe(0);
@@ -252,7 +259,7 @@ describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
       }
     ];
 
-    const result = calculateFinalScores(typeName, validationResults, 120);
+    const result = calculateFinalScores(selectedType, validationResults, 120);
 
     expect(result.finalScores[0].components.speedScore).toBe(0);
   });
@@ -269,7 +276,7 @@ describe('#utils/validator/google-maps/score/calculate-final-scores.js', () => {
       }
     ];
 
-    const result = calculateFinalScores(typeName, validationResults, 120);
+    const result = calculateFinalScores(selectedType, validationResults, 120);
 
     // The statistics.count is the length of the finalScores array, not the count of valid scores
     expect(result.statistics.count).toBe(1); // One final score entry

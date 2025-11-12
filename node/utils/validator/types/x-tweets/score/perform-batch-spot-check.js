@@ -1,14 +1,13 @@
 import logger from '#modules/logger/index.js';
 import time from '#modules/time/index.js';
-import config from '#config';
-import retryFetch from '#modules/retry-fetch/index.js';
-import retryable from '#modules/retryable/index.js';
 import array from '#modules/array/index.js';
+import getTweetsFromApify from './get-tweets-from-apify.js';
+import getTweetsFromDesearch from './get-tweets-from-desearch.js';
 
 /**
- * Perform batch spot check on tweets from all miners by verifying them against Desearch API.
+ * Perform batch spot check on tweets from all miners by verifying them against Desearch API or Twitter guest token API.
  * This function takes tweets from multiple miners and validates their authenticity by checking
- * them against the actual X/Twitter data using Desearch API.
+ * them against the actual X/Twitter data.
  *
  * @param {Array} selectedSpotCheckTweets - Array of objects containing miner information and their tweets
  * @param {string} keyword - The keyword used for the synthetic task
@@ -16,13 +15,9 @@ import array from '#modules/array/index.js';
  */
 const performBatchSpotCheck = async (selectedSpotCheckTweets, keyword) => {
   const startTime = Date.now();
+  const useApifyToSpotCheck = process.env.X_USE_APIFY_TO_SPOT_CHECK === 'true';
 
   try {
-    // Check if API token is configured
-    if (!process.env.DESEARCH_API_TOKEN) {
-      throw new Error('DESEARCH_API_TOKEN not configured');
-    }
-
     // Collect all unique tweet IDs from all miners
     const tweetIds = array.unique(
       selectedSpotCheckTweets.flatMap(selectedTweet =>
@@ -30,37 +25,10 @@ const performBatchSpotCheck = async (selectedSpotCheckTweets, keyword) => {
       )
     );
 
-    logger.info(`X Tweets - Batch spot check: Verifying ${tweetIds.length} unique tweets from ${selectedSpotCheckTweets.length} miners for keyword: ${keyword}`);
+    const method = useApifyToSpotCheck ? 'Apify' : 'Desearch';
+    logger.info(`X Tweets - Batch spot check (${method}): Verifying ${tweetIds.length} unique tweets from ${selectedSpotCheckTweets.length} miners for keyword: ${keyword}`);
 
-    // Make API calls for each tweet ID with retry logic
-    const verificationPromises = tweetIds.map(async (tweetId) => {
-      try {
-        const data = await retryable(async () => {
-          const response = await retryFetch(`${config.VALIDATOR.X_TWEETS.DESEARCH_API_URL}?id=${tweetId}`, {
-            method: 'GET',
-            headers: {
-              'accept': 'application/json',
-              'content-type': 'application/json',
-              'Authorization': process.env.DESEARCH_API_TOKEN
-            }
-          });
-
-          if (!response.ok) {
-            throw new Error(`Desearch API error: ${response.status} ${response.statusText}`);
-          }
-
-          return response.json();
-        }, 3);
-
-        return data;
-      } catch (error) {
-        logger.warning(`X Tweets - Error fetching tweet ${tweetId} from Desearch after retries:`, error.message);
-        return;
-      }
-    });
-
-    // Wait for all verification requests to complete
-    const results = await Promise.all(verificationPromises);
+    const results = await (useApifyToSpotCheck ? getTweetsFromApify(tweetIds) : getTweetsFromDesearch(tweetIds));
 
     // Filter out failed results and create a map of verified tweets by tweetId
     const verifiedTweets = new Map();

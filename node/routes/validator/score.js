@@ -3,6 +3,8 @@ import time from '#modules/time/index.js';
 import logger from '#modules/logger/index.js';
 import calculateFinalScores from '#utils/validator/calculate-final-scores.js';
 import Types from '#utils/validator/types/index.js';
+import uploadToS3 from '#utils/validator/upload-to-s3.js';
+import sendMetadata from '#utils/validator/send-metadata.js';
 
 /**
  * Output the result of the score route
@@ -117,13 +119,22 @@ const execute = async(request, response) => {
     const validationResults = await selectedType.score(responses, metadata, responseTimes, synapseTimeout, minerUIDs, typeId);
 
     // Create final scores and statistics
-    const { statistics, finalScores } = calculateFinalScores(selectedType.name, validationResults, synapseTimeout);
+    const { statistics, finalScores } = calculateFinalScores(selectedType, validationResults, synapseTimeout);
 
     // Return scoring results with statistics
     const result = output({ metadata, typeId, typeName: selectedType.name, statistics, finalScores });
 
-    // Send the data for digestion. Don't wait for it to complete
-    selectedType.prepareAndSendForDigestion(responses, minerUIDs, metadata);
+    // Upload to S3 and send metadata OR send to digestion endpoint (legacy)
+    if (process.env.S3_ENABLED === 'true') {
+      // Upload to S3 and get the total item count, S3 bucket and S3 path
+      const { totalItemCount, s3Bucket, s3Path } = await uploadToS3(validationResults, metadata, selectedType);
+
+      // Send metadata with the actual deduplicated count
+      await sendMetadata(selectedType.id, metadata, totalItemCount, s3Bucket, s3Path);
+    } else {
+      // Legacy system: digestion endpoint
+      selectedType.prepareAndSendForDigestion(responses, minerUIDs, metadata);
+    }
 
     return responseService.success(response, result);
   } catch (error) {
