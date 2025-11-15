@@ -228,5 +228,8 @@ async def forward(self):
     # Update the global scores with new rewards
     self.update_scores(rewards, miner_uids)
 
+    # Save state immediately after scoring to prevent data loss
+    self.save_state()
+
     # Wait before next validation round
     time.sleep(SYNAPSE_WAIT_TIME)
