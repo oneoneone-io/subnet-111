@@ -37,8 +37,9 @@ const sendMetadata = async (typeId, metadata, totalItemCount, s3Bucket, s3Path) 
             })
         });
 
+        const data = await response.json();
         logger.info(`Metadata sent successfully for ${typeId} - ${totalItemCount} items`);
-        return response;
+        return data;
     } catch (error) {
         logger.error(`Error sending metadata: ${error}`);
     }

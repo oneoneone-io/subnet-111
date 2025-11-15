@@ -60,6 +60,14 @@ export default {
         'unsloth/Mistral-Small-24B-Instruct-2501'
       ],
 
+      // OpenRouter API configuration
+      OPENROUTER_API_URL: 'https://openrouter.ai/api/v1/chat/completions',
+      OPENROUTER_MODELS: [
+        'mistralai/mistral-small-3.2-24b-instruct',
+        'mistralai/mistral-small-3.1-24b-instruct',
+        'mistralai/mistral-nemo'
+      ],
+
       // Desearch API configuration
       DESEARCH_API_URL: 'https://api.desearch.ai/twitter/post',
 

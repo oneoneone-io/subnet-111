@@ -2,7 +2,7 @@ import sendMetadata from './send-metadata.js';
 import retryFetch from '#modules/retry-fetch/index.js';
 import logger from '#modules/logger/index.js';
 
-jest.mock('#modules/retry-fetch/index.js', () => jest.fn().mockResolvedValue({}));
+jest.mock('#modules/retry-fetch/index.js', () => jest.fn());
 
 jest.mock('#modules/logger/index.js', () => ({
   info: jest.fn(),
@@ -23,7 +23,10 @@ describe('#utils/validator/send-metadata.js', () => {
     const s3Bucket = 'test-bucket';
     const s3Path = 'test/path/file.json';
 
-    const mockResponse = { success: true };
+    const mockResponseData = { success: true };
+    const mockResponse = {
+      json: jest.fn().mockResolvedValue(mockResponseData)
+    };
     retryFetch.mockResolvedValue(mockResponse);
 
     const result = await sendMetadata(typeId, metadata, totalItemCount, s3Bucket, s3Path);
@@ -48,8 +51,9 @@ describe('#utils/validator/send-metadata.js', () => {
     expect(requestBody.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(requestBody.timestamp).toBeDefined();
 
+    expect(mockResponse.json).toHaveBeenCalledTimes(1);
     expect(logger.info).toHaveBeenCalledWith(`Metadata sent successfully for ${typeId} - ${totalItemCount} items`);
-    expect(result).toEqual(mockResponse);
+    expect(result).toEqual(mockResponseData);
   });
 
   test('should not send metadata if platform token is not set', async () => {
