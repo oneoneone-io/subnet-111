@@ -65,6 +65,9 @@ class BaseValidatorNeuron(BaseNeuron):
         self.burner_uid = 0  # UID to burn emissions to
         self.burner_weight = 0.75  # Percentage of weight to burn (75%)
 
+        # Load previous state before first sync (if it exists)
+        self.load_state()
+
         # Init sync with the network. Updates the metagraph.
         self.sync()
 
@@ -398,20 +401,37 @@ class BaseValidatorNeuron(BaseNeuron):
         """Saves the state of the validator to a file."""
         bt.logging.info("Saving validator state.")
 
-        # Save the state of the validator to file.
-        np.savez(
-            self.config.neuron.full_path + "/state.npz",
-            step=self.step,
-            scores=self.scores,
-            hotkeys=self.hotkeys,
-        )
+        try:
+            # Save the state of the validator to file.
+            np.savez(
+                self.config.neuron.full_path + "/state.npz",
+                step=self.step,
+                scores=self.scores,
+                hotkeys=self.hotkeys,
+            )
+            bt.logging.success(
+                f"Successfully saved validator state to {self.config.neuron.full_path}/state.npz"
+            )
+        except Exception as e:
+            bt.logging.error(f"Failed to save validator state: {e}")
 
     def load_state(self):
         """Loads the state of the validator from a file."""
         bt.logging.info("Loading validator state.")
 
-        # Load the state of the validator from file.
-        state = np.load(self.config.neuron.full_path + "/state.npz")
-        self.step = state["step"]
-        self.scores = state["scores"]
-        self.hotkeys = state["hotkeys"]
+        try:
+            # Load the state of the validator from file.
+            state = np.load(self.config.neuron.full_path + "/state.npz")
+            self.step = state["step"]
+            self.scores = state["scores"]
+            self.hotkeys = state["hotkeys"]
+            bt.logging.success(
+                f"Successfully loaded validator state from {self.config.neuron.full_path}/state.npz - "
+                f"Step: {self.step}, Scores shape: {self.scores.shape}"
+            )
+        except FileNotFoundError:
+            bt.logging.info("No previous state found. Starting with fresh scores.")
+        except Exception as e:
+            bt.logging.warning(
+                f"Failed to load validator state: {e}. Starting with fresh scores."
+            )

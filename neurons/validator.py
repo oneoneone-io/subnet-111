@@ -36,9 +36,6 @@ class Validator(BaseValidatorNeuron):
         super(Validator, self).__init__(config=config)
         bt.logging.info(f"Validator initialized with netuid: {self.config.netuid}")
 
-        bt.logging.info("Loading validator state...")
-        self.load_state()
-
     async def forward(self):
         """
         Validator forward pass. Consists of:
