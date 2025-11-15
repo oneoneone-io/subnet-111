@@ -58,5 +58,9 @@ app.listen(PORT, () => {
   logger.info(`    * Chutes model: ${config.VALIDATOR.X_TWEETS.CHUTES_MODELS}`);
   logger.info(`    * Timeout: ${config.VALIDATOR.X_TWEETS.TWEETS_SYNAPSE_PARAMS.timeout} seconds`);
   logger.info(`  - Apify token configured: ${Boolean(process.env.APIFY_TOKEN)}`);
+  logger.info(`  - Chutes API token configured: ${Boolean(process.env.CHUTES_API_TOKEN)}`);
+  logger.info(`  - Desearch API token configured: ${Boolean(process.env.DESEARCH_API_TOKEN)}`);
+  logger.info(`  - Platform token configured: ${Boolean(process.env.PLATFORM_TOKEN)}`);
+  logger.info(`  - OpenRouter API key configured: ${Boolean(process.env.OPENROUTER_API_KEY)}`);
   logger.info('='.repeat(50));
 });

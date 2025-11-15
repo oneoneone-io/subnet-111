@@ -2,6 +2,7 @@ import config from '#config';
 import logger from '#modules/logger/index.js';
 import time from '#modules/time/index.js';
 import random from '#modules/random/index.js';
+import retryable from '#modules/retryable/index.js';
 import { generateKeywordsFromChutes, generateKeywordsFromOpenRouter } from './generate-keywords.js';
 
 /**
@@ -29,7 +30,7 @@ const createSyntheticTask = async () => {
       }
 
       logger.info('X Tweets - Calling OpenRouter API to generate keywords');
-      keywords = await generateKeywordsFromOpenRouter();
+      keywords = await retryable(generateKeywordsFromOpenRouter, 3);
       logger.info(`X Tweets - Generated ${keywords.length} keywords from OpenRouter API`);
     } else {
       // Use Chutes API (default)
@@ -38,7 +39,7 @@ const createSyntheticTask = async () => {
       }
 
       logger.info('X Tweets - Calling Chutes API to generate keywords');
-      keywords = await generateKeywordsFromChutes();
+      keywords = await retryable(generateKeywordsFromChutes, 3);
       logger.info(`X Tweets - Generated ${keywords.length} keywords from Chutes API`);
     }
 

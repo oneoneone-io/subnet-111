@@ -5,7 +5,6 @@ import {
 } from './generate-keywords.js';
 import retryFetch from '#modules/retry-fetch/index.js';
 import random from '#modules/random/index.js';
-import config from '#config';
 
 // Mock dependencies
 jest.mock('#modules/retry-fetch/index.js', () => jest.fn());

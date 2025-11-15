@@ -2,6 +2,7 @@ import config from '#config';
 import logger from '#modules/logger/index.js';
 import time from '#modules/time/index.js';
 import random from '#modules/random/index.js';
+import retryable from '#modules/retryable/index.js';
 import createSyntheticTask from './index.js';
 import { generateKeywordsFromChutes, generateKeywordsFromOpenRouter } from './generate-keywords.js';
 
@@ -16,6 +17,7 @@ jest.mock('#modules/time/index.js', () => ({
 jest.mock('#modules/random/index.js', () => ({
   fromArray: jest.fn(),
 }));
+jest.mock('#modules/retryable/index.js', () => jest.fn());
 jest.mock('./generate-keywords.js', () => ({
   generateKeywordsFromChutes: jest.fn(),
   generateKeywordsFromOpenRouter: jest.fn(),
@@ -42,6 +44,9 @@ describe('utils/validator/types/x-tweets/create-synthetic/index.js', () => {
 
     // Mock time.getDuration to return a fixed value
     time.getDuration.mockReturnValue(1.5);
+
+    // Mock retryable to execute the function and return its result
+    retryable.mockImplementation((function_) => function_());
   });
 
   afterEach(() => {
@@ -60,6 +65,7 @@ describe('utils/validator/types/x-tweets/create-synthetic/index.js', () => {
 
     const result = await createSyntheticTask();
 
+    expect(retryable).toHaveBeenCalledWith(generateKeywordsFromChutes, 3);
     expect(generateKeywordsFromChutes).toHaveBeenCalledTimes(1);
     expect(generateKeywordsFromOpenRouter).not.toHaveBeenCalled();
     expect(random.fromArray).toHaveBeenCalledWith(mockKeywords);
@@ -88,6 +94,7 @@ describe('utils/validator/types/x-tweets/create-synthetic/index.js', () => {
 
     const result = await createSyntheticTask();
 
+    expect(retryable).toHaveBeenCalledWith(generateKeywordsFromOpenRouter, 3);
     expect(generateKeywordsFromOpenRouter).toHaveBeenCalledTimes(1);
     expect(generateKeywordsFromChutes).not.toHaveBeenCalled();
     expect(random.fromArray).toHaveBeenCalledWith(mockKeywords);

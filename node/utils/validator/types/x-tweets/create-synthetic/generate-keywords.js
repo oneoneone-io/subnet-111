@@ -20,7 +20,7 @@ Rules:
 4. Keep all keywords safe: no profanity, hate, sexual, or personal-identifying content.
 5. Keywords should be short (1–3 words).
 6. Return as a JSON array of strings, nothing else, exactly 50 items.
-7. Example format:
+7. YOU MUST USE THIS FORMAT. Example format:
 [
   "permafrost",
   "yuzu",
@@ -46,7 +46,7 @@ Rules:
 3. Keep all keywords safe: no hate speech or inflammatory content.
 4. Keywords should be short (1–3 words).
 5. Return as a JSON array of strings, nothing else, exactly 50 items.
-6. Example format:
+6. YOU MUST USE THIS FORMAT. Example format:
 [
   "senate hearing",
   "diplomacy",
@@ -71,7 +71,7 @@ Rules:
 3. Avoid extremely common terms (e.g., "DNA", "atom", "gravity").
 4. Keywords should be short (1–3 words).
 5. Return as a JSON array of strings, nothing else, exactly 50 items.
-6. Example format:
+6. YOU MUST USE THIS FORMAT. Example format:
 [
   "quantum entanglement",
   "crispr",
