@@ -2,8 +2,9 @@ import config from '#config';
 import logger from '#modules/logger/index.js';
 import time from '#modules/time/index.js';
 import random from '#modules/random/index.js';
-import retryFetch from '#modules/retry-fetch/index.js';
+import retryable from '#modules/retryable/index.js';
 import createSyntheticTask from './index.js';
+import { generateKeywordsFromChutes, generateKeywordsFromOpenRouter } from './generate-keywords.js';
 
 jest.mock('#config');
 jest.mock('#modules/logger/index.js', () => ({
@@ -16,7 +17,11 @@ jest.mock('#modules/time/index.js', () => ({
 jest.mock('#modules/random/index.js', () => ({
   fromArray: jest.fn(),
 }));
-jest.mock('#modules/retry-fetch/index.js');
+jest.mock('#modules/retryable/index.js', () => jest.fn());
+jest.mock('./generate-keywords.js', () => ({
+  generateKeywordsFromChutes: jest.fn(),
+  generateKeywordsFromOpenRouter: jest.fn(),
+}));
 
 describe('utils/validator/types/x-tweets/create-synthetic/index.js', () => {
   const originalEnvironment = process.env;
@@ -39,51 +44,31 @@ describe('utils/validator/types/x-tweets/create-synthetic/index.js', () => {
 
     // Mock time.getDuration to return a fixed value
     time.getDuration.mockReturnValue(1.5);
+
+    // Mock retryable to execute the function and return its result
+    retryable.mockImplementation((function_) => function_());
   });
 
   afterEach(() => {
     process.env = originalEnvironment;
   });
 
-  test('should create synthetic task successfully', async () => {
+  test('should create synthetic task successfully with Chutes API (default)', async () => {
     const mockKeywords = ['bitcoin', 'ethereum', 'crypto', 'blockchain', 'defi'];
-    const mockPrompt = 'Generate a list of 50 real, diverse, and unpredictable keywords';
-    const mockModel = 'gpt-4';
     const mockSelectedKeyword = 'bitcoin';
-    const mockResponse = {
-      ok: true,
-      json: jest.fn().mockResolvedValue({
-        choices: [{
-          message: {
-            content: JSON.stringify(mockKeywords)
-          }
-        }]
-      })
-    };
 
     process.env.CHUTES_API_TOKEN = 'test-token';
-    retryFetch.mockResolvedValue(mockResponse);
-    // random.fromArray is called 3 times: for prompt, model, and keyword
-    random.fromArray
-      .mockReturnValueOnce(mockPrompt)
-      .mockReturnValueOnce(mockModel)
-      .mockReturnValueOnce(mockSelectedKeyword);
+    delete process.env.X_USE_OPENROUTER_TO_CREATE_SYNTHETIC;
+
+    generateKeywordsFromChutes.mockResolvedValue(mockKeywords);
+    random.fromArray.mockReturnValue(mockSelectedKeyword);
 
     const result = await createSyntheticTask();
 
-    expect(retryFetch).toHaveBeenCalledWith(
-      'https://api.chutes.com/v1/chat/completions',
-      expect.objectContaining({
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer test-token',
-          'Content-Type': 'application/json'
-        },
-        body: expect.stringContaining(mockPrompt)
-      })
-    );
-
-    expect(random.fromArray).toHaveBeenCalledTimes(3);
+    expect(retryable).toHaveBeenCalledWith(generateKeywordsFromChutes, 3);
+    expect(generateKeywordsFromChutes).toHaveBeenCalledTimes(1);
+    expect(generateKeywordsFromOpenRouter).not.toHaveBeenCalled();
+    expect(random.fromArray).toHaveBeenCalledWith(mockKeywords);
     expect(logger.info).toHaveBeenCalledWith('X Tweets - Creating synthetic task');
     expect(logger.info).toHaveBeenCalledWith('X Tweets - Calling Chutes API to generate keywords');
     expect(logger.info).toHaveBeenCalledWith(`X Tweets - Generated ${mockKeywords.length} keywords from Chutes API`);
@@ -97,138 +82,79 @@ describe('utils/validator/types/x-tweets/create-synthetic/index.js', () => {
     });
   });
 
-  test('should handle markdown code blocks in response', async () => {
-    const mockKeywords = ['test', 'keyword'];
-    const mockPrompt = 'Generate a list of 50 real, diverse, and unpredictable keywords';
-    const mockModel = 'gpt-4';
-    const mockResponse = {
-      ok: true,
-      json: jest.fn().mockResolvedValue({
-        choices: [{
-          message: {
-            content: '```json\n' + JSON.stringify(mockKeywords) + '\n```'
-          }
-        }]
-      })
-    };
+  test('should create synthetic task successfully with OpenRouter API', async () => {
+    const mockKeywords = ['quantum', 'photosynthesis', 'fjord'];
+    const mockSelectedKeyword = 'quantum';
 
-    process.env.CHUTES_API_TOKEN = 'test-token';
-    retryFetch.mockResolvedValue(mockResponse);
-    random.fromArray
-      .mockReturnValueOnce(mockPrompt)
-      .mockReturnValueOnce(mockModel)
-      .mockReturnValueOnce('test');
+    process.env.OPENROUTER_API_KEY = 'test-openrouter-key';
+    process.env.X_USE_OPENROUTER_TO_CREATE_SYNTHETIC = 'true';
+
+    generateKeywordsFromOpenRouter.mockResolvedValue(mockKeywords);
+    random.fromArray.mockReturnValue(mockSelectedKeyword);
 
     const result = await createSyntheticTask();
 
-    expect(result.metadata.keyword).toBe('"test"');
+    expect(retryable).toHaveBeenCalledWith(generateKeywordsFromOpenRouter, 3);
+    expect(generateKeywordsFromOpenRouter).toHaveBeenCalledTimes(1);
+    expect(generateKeywordsFromChutes).not.toHaveBeenCalled();
+    expect(random.fromArray).toHaveBeenCalledWith(mockKeywords);
+    expect(logger.info).toHaveBeenCalledWith('X Tweets - Creating synthetic task');
+    expect(logger.info).toHaveBeenCalledWith('X Tweets - Calling OpenRouter API to generate keywords');
+    expect(logger.info).toHaveBeenCalledWith(`X Tweets - Generated ${mockKeywords.length} keywords from OpenRouter API`);
+    expect(logger.info).toHaveBeenCalledWith(`X Tweets - Selected keyword: "${mockSelectedKeyword}" (took 1.50s)`);
+
+    expect(result).toEqual({
+      metadata: {
+        keyword: `"${mockSelectedKeyword}"`
+      },
+      timeout: 120
+    });
   });
 
-  test('should handle code blocks without json marker', async () => {
-    const mockKeywords = ['test', 'keyword'];
-    const mockPrompt = 'Generate a list of 50 real, diverse, and unpredictable keywords';
-    const mockModel = 'gpt-4';
-    const mockResponse = {
-      ok: true,
-      json: jest.fn().mockResolvedValue({
-        choices: [{
-          message: {
-            content: '```\n' + JSON.stringify(mockKeywords) + '\n```'
-          }
-        }]
-      })
-    };
-
-    process.env.CHUTES_API_TOKEN = 'test-token';
-    retryFetch.mockResolvedValue(mockResponse);
-    random.fromArray
-      .mockReturnValueOnce(mockPrompt)
-      .mockReturnValueOnce(mockModel)
-      .mockReturnValueOnce('test');
-
-    const result = await createSyntheticTask();
-
-    expect(result.metadata.keyword).toBe('"test"');
-  });
-
-  test('should throw error when CHUTES_API_TOKEN is not configured', async () => {
+  test('should throw error when CHUTES_API_TOKEN is not configured (default mode)', async () => {
     delete process.env.CHUTES_API_TOKEN;
+    delete process.env.X_USE_OPENROUTER_TO_CREATE_SYNTHETIC;
 
     await expect(createSyntheticTask()).rejects.toThrow('CHUTES_API_TOKEN not configured');
     expect(logger.error).toHaveBeenCalledWith(
       'X Tweets - Error creating synthetic task (took 1.50s):',
       expect.any(Error)
     );
+    expect(generateKeywordsFromChutes).not.toHaveBeenCalled();
   });
 
-  test('should throw error when API response is not ok', async () => {
-    const mockResponse = {
-      ok: false,
-      status: 500,
-      statusText: 'Internal Server Error'
-    };
+  test('should throw error when OPENROUTER_API_KEY is not configured', async () => {
+    delete process.env.OPENROUTER_API_KEY;
+    process.env.X_USE_OPENROUTER_TO_CREATE_SYNTHETIC = 'true';
 
+    await expect(createSyntheticTask()).rejects.toThrow('OPENROUTER_API_KEY not configured');
+    expect(logger.error).toHaveBeenCalledWith(
+      'X Tweets - Error creating synthetic task (took 1.50s):',
+      expect.any(Error)
+    );
+    expect(generateKeywordsFromOpenRouter).not.toHaveBeenCalled();
+  });
+
+  test('should handle Chutes API call failure', async () => {
     process.env.CHUTES_API_TOKEN = 'test-token';
-    retryFetch.mockResolvedValue(mockResponse);
+    delete process.env.X_USE_OPENROUTER_TO_CREATE_SYNTHETIC;
+
+    generateKeywordsFromChutes.mockRejectedValue(new Error('Chutes API error: 500 Internal Server Error'));
 
     await expect(createSyntheticTask()).rejects.toThrow('Chutes API error: 500 Internal Server Error');
+    expect(logger.error).toHaveBeenCalledWith(
+      'X Tweets - Error creating synthetic task (took 1.50s):',
+      expect.any(Error)
+    );
   });
 
-  test('should throw error when no content in response', async () => {
-    const mockResponse = {
-      ok: true,
-      json: jest.fn().mockResolvedValue({
-        choices: [{}] // No message content
-      })
-    };
+  test('should handle OpenRouter API call failure', async () => {
+    process.env.OPENROUTER_API_KEY = 'test-key';
+    process.env.X_USE_OPENROUTER_TO_CREATE_SYNTHETIC = 'true';
 
-    process.env.CHUTES_API_TOKEN = 'test-token';
-    retryFetch.mockResolvedValue(mockResponse);
+    generateKeywordsFromOpenRouter.mockRejectedValue(new Error('OpenRouter API error: 500 Internal Server Error'));
 
-    await expect(createSyntheticTask()).rejects.toThrow('No content in Chutes API response');
-  });
-
-  test('should throw error when invalid keywords array', async () => {
-    const mockResponse = {
-      ok: true,
-      json: jest.fn().mockResolvedValue({
-        choices: [{
-          message: {
-            content: 'not an array'
-          }
-        }]
-      })
-    };
-
-    process.env.CHUTES_API_TOKEN = 'test-token';
-    retryFetch.mockResolvedValue(mockResponse);
-
-    await expect(createSyntheticTask()).rejects.toThrow('Unexpected token \'o\', "not an array" is not valid JSON');
-  });
-
-  test('should throw error when empty keywords array', async () => {
-    const mockResponse = {
-      ok: true,
-      json: jest.fn().mockResolvedValue({
-        choices: [{
-          message: {
-            content: '[]'
-          }
-        }]
-      })
-    };
-
-    process.env.CHUTES_API_TOKEN = 'test-token';
-    retryFetch.mockResolvedValue(mockResponse);
-
-    await expect(createSyntheticTask()).rejects.toThrow('Invalid keywords array from Chutes API');
-  });
-
-  test('should handle API call failure', async () => {
-    process.env.CHUTES_API_TOKEN = 'test-token';
-    retryFetch.mockRejectedValue(new Error('Network error'));
-
-    await expect(createSyntheticTask()).rejects.toThrow('Network error');
+    await expect(createSyntheticTask()).rejects.toThrow('OpenRouter API error: 500 Internal Server Error');
     expect(logger.error).toHaveBeenCalledWith(
       'X Tweets - Error creating synthetic task (took 1.50s):',
       expect.any(Error)
