@@ -14,26 +14,19 @@ dotenv.config();
 const app = express();
 const PORT = process.env.VALIDATOR_NODE_PORT || 3002;
 
-// Middleware
-app.use(express.json({ limit: '1gb' }));
-
 /**
  * Validator Public API endpoints
  */
-// Download synapse data endpoint
 app.get('/download-synapse-data', platformTokenAuth, downloadSynapseDataRoute.execute);
 
 /**
  * Validator localhost-only API endpoints
  */
-// Apply localhost-only middleware to remaining routes
 app.use(localhostOnly);
 
-// Validator localhost-only API endpoints (uses localhost-only middleware)
-// Create synthetic validation tasks with place data
 app.get('/create-synthetic-task', createSyntheticRoute.execute);
 
-// Score miner responses using spot check validation
+// Use streaming for large payloads - don't buffer the entire body
 app.post('/score-responses', scoreRoute.execute);
 
 // Health check endpoint

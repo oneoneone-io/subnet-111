@@ -6,6 +6,7 @@ import calculateFinalScores from '#utils/validator/calculate-final-scores.js';
 import Types from '#utils/validator/types/index.js';
 import uploadToS3 from '#utils/validator/upload-to-s3.js';
 import sendMetadata from '#utils/validator/send-metadata.js';
+import streamJsonParser from '#modules/stream-json-parser/index.js';
 
 jest.mock('#modules/response/index.js', () => ({
   success: jest.fn(),
@@ -31,6 +32,10 @@ jest.mock('#utils/validator/types/index.js', () => ({
 jest.mock('#utils/validator/upload-to-s3.js', () => jest.fn());
 
 jest.mock('#utils/validator/send-metadata.js', () => jest.fn());
+
+jest.mock('#modules/stream-json-parser/index.js', () => ({
+  parseStreamJSON: jest.fn(),
+}));
 
 describe('routes/validator/score.js', () => {
   let timestamp;
@@ -262,6 +267,7 @@ describe('routes/validator/score.js', () => {
         }
       };
 
+      streamJsonParser.parseStreamJSON.mockResolvedValue(request.body);
       Types.getTypeById.mockReturnValue(selectedType);
       selectedType.score.mockResolvedValue([]);
       calculateFinalScores.mockReturnValue({
@@ -275,8 +281,23 @@ describe('routes/validator/score.js', () => {
       });
     });
 
+    test('should return internalServerError if streamJsonParser throws error', async () => {
+      streamJsonParser.parseStreamJSON.mockRejectedValue(new Error('Parse failed'));
+
+      await scoreRoute.execute(request, response);
+
+      expect(responseService.internalServerError).toHaveBeenCalledWith(response, {
+        error: 'Failed to score responses',
+        message: 'Parse failed',
+        timestamp
+      });
+      expect(logger.error).toHaveBeenCalledWith('Error scoring responses:', expect.any(Error));
+    });
+
     test('should return a badRequest if the request is invalid (missing typeId)', async () => {
-      request.body = { responses: [], metadata };
+      const invalidBody = { responses: [], metadata };
+      streamJsonParser.parseStreamJSON.mockResolvedValue(invalidBody);
+
       await scoreRoute.execute(request, response);
 
       expect(responseService.badRequest).toHaveBeenCalledWith(response, {
@@ -350,6 +371,7 @@ describe('routes/validator/score.js', () => {
 
     test('should log response times information when provided', async () => {
       request.body.responseTimes = [100, 200, 300];
+      streamJsonParser.parseStreamJSON.mockResolvedValue(request.body);
 
       await scoreRoute.execute(request, response);
 
@@ -358,6 +380,7 @@ describe('routes/validator/score.js', () => {
 
     test('should log miner UIDs when provided', async () => {
       request.body.minerUIDs = [1, 2, 3];
+      streamJsonParser.parseStreamJSON.mockResolvedValue(request.body);
 
       await scoreRoute.execute(request, response);
 
@@ -377,6 +400,7 @@ describe('routes/validator/score.js', () => {
         synapseTimeout: 60,
         minerUIDs
       };
+      streamJsonParser.parseStreamJSON.mockResolvedValue(request.body);
 
       await scoreRoute.execute(request, response);
 
@@ -398,6 +422,7 @@ describe('routes/validator/score.js', () => {
 
       request.body.responses = responses;
       request.body.minerUIDs = minerUIDs;
+      streamJsonParser.parseStreamJSON.mockResolvedValue(request.body);
 
       await scoreRoute.execute(request, response);
 
@@ -410,6 +435,7 @@ describe('routes/validator/score.js', () => {
         metadata,
         responses: []
       };
+      streamJsonParser.parseStreamJSON.mockResolvedValue(request.body);
 
       await scoreRoute.execute(request, response);
 
@@ -508,6 +534,8 @@ describe('routes/validator/score.js', () => {
           minerUIDs: [5, 10]
         }
       };
+
+      streamJsonParser.parseStreamJSON.mockResolvedValue(complexRequest.body);
 
       const validationResults = [
         { minerUID: 5, score: 0.9 },
