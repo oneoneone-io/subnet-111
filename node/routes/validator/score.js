@@ -5,6 +5,7 @@ import calculateFinalScores from '#utils/validator/calculate-final-scores.js';
 import Types from '#utils/validator/types/index.js';
 import uploadToS3 from '#utils/validator/upload-to-s3.js';
 import sendMetadata from '#utils/validator/send-metadata.js';
+import streamJsonParser from '#modules/stream-json-parser/index.js';
 
 /**
  * Output the result of the score route
@@ -90,6 +91,9 @@ const validate = ({ typeId, metadata, responses, selectedType }) => {
  */
 const execute = async(request, response) => {
   try {
+    // Parse the request stream directly without buffering
+    const body = await streamJsonParser.parseStreamJSON(request);
+
     const {
       typeId,
       metadata,
@@ -97,7 +101,7 @@ const execute = async(request, response) => {
       responseTimes = [],
       synapseTimeout = 120,
       minerUIDs = []
-    } = request.body;
+    } = body;
 
     // Get the type
     const selectedType = Types.getTypeById(typeId);
