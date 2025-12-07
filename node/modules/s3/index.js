@@ -19,21 +19,32 @@ function getClient() {
   }
 
   // Validate required environment variables
-  if (!process.env.S3_SEED || !process.env.S3_ENDPOINT) {
-    logger.warning('S3_SEED or S3_ENDPOINT not configured. S3 upload disabled.');
+  if (!process.env.S3_ENDPOINT) {
+    logger.warning('S3_ENDPOINT not configured. S3 disabled.');
+    return;
+  }
+
+  // Get credentials: prefer S3_SEED, fallback to S3_ACCESS_KEY/S3_SECRET_KEY
+  let accessKey, secretKey;
+  if (process.env.S3_SEED) {
+    const seedPhrase = process.env.S3_SEED;
+    accessKey = Buffer.from(seedPhrase, 'utf8').toString('base64');
+    secretKey = seedPhrase;
+  } else if (process.env.S3_ACCESS_KEY && process.env.S3_SECRET_KEY) {
+    accessKey = process.env.S3_ACCESS_KEY;
+    secretKey = process.env.S3_SECRET_KEY;
+  } else {
+    logger.warning('S3 credentials not configured (need S3_SEED or S3_ACCESS_KEY/S3_SECRET_KEY). S3 disabled.');
     return;
   }
 
   try {
-    const seedPhrase = process.env.S3_SEED;
-    const accessKey = Buffer.from(seedPhrase, 'utf8').toString('base64');
-
     minioClient = new Minio.Client({
       endPoint: process.env.S3_ENDPOINT,
       port: 443,
       useSSL: true,
-      accessKey: accessKey,
-      secretKey: seedPhrase,
+      accessKey,
+      secretKey,
       region: 'decentralized',
     });
 

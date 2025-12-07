@@ -8,8 +8,9 @@ const DIGESTION_API_URL = 'https://oneoneone.io/api/digest';
  * @param {string} type - The type of data to send
  * @param {string} minerUID - The UID of the miner
  * @param {Array} data - The data to send
+ * @param {Object} metadata - The synapse metadata (keyword, name, etc.)
  */
-const sendForDigestion = async (type, minerUID, data) => {
+const sendForDigestion = async (type, minerUID, data, metadata = {}) => {
     if(!process.env.PLATFORM_TOKEN){
         logger.error('Platform token is not set. Skipping digestion request');
         return;
@@ -26,6 +27,8 @@ const sendForDigestion = async (type, minerUID, data) => {
             body: JSON.stringify({
                 type,
                 miner_uid: minerUID,
+                keyword: metadata.keyword?.replaceAll(/^"|"$/g, ''),
+                name: metadata.name,
                 data,
             })
         })

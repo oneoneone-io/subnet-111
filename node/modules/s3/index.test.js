@@ -38,6 +38,8 @@ describe('modules/s3', () => {
     delete process.env.S3_ENABLED;
     delete process.env.S3_SEED;
     delete process.env.S3_ENDPOINT;
+    delete process.env.S3_ACCESS_KEY;
+    delete process.env.S3_SECRET_KEY;
 
     // Setup mock client
     mockClient = {
@@ -71,7 +73,7 @@ describe('modules/s3', () => {
       });
     });
 
-    test('should return false when S3_SEED is missing', async () => {
+    test('should return false when credentials are missing', async () => {
       await jest.isolateModulesAsync(async () => {
         process.env.S3_ENABLED = 'true';
         process.env.S3_ENDPOINT = 'test.endpoint.com';
@@ -81,7 +83,7 @@ describe('modules/s3', () => {
         const result = await s3Module.uploadJson('test-bucket', 'test.json', { data: 'test' });
 
         expect(result).toBe(false);
-        expect(logger.warning).toHaveBeenCalledWith('S3_SEED or S3_ENDPOINT not configured. S3 upload disabled.');
+        expect(logger.warning).toHaveBeenCalledWith('S3 credentials not configured (need S3_SEED or S3_ACCESS_KEY/S3_SECRET_KEY). S3 disabled.');
       });
     });
 
@@ -95,7 +97,31 @@ describe('modules/s3', () => {
         const result = await s3Module.uploadJson('test-bucket', 'test.json', { data: 'test' });
 
         expect(result).toBe(false);
-        expect(logger.warning).toHaveBeenCalledWith('S3_SEED or S3_ENDPOINT not configured. S3 upload disabled.');
+        expect(logger.warning).toHaveBeenCalledWith('S3_ENDPOINT not configured. S3 disabled.');
+      });
+    });
+
+    test('should work with S3_ACCESS_KEY and S3_SECRET_KEY', async () => {
+      await jest.isolateModulesAsync(async () => {
+        process.env.S3_ENABLED = 'true';
+        process.env.S3_ACCESS_KEY = 'test-access-key';
+        process.env.S3_SECRET_KEY = 'test-secret-key';
+        process.env.S3_ENDPOINT = 'test.endpoint.com';
+
+        mockClient.bucketExists.mockResolvedValue(true);
+        mockClient.putObject.mockResolvedValue();
+
+        const s3ModuleImport = await import('./index.js');
+        const s3Module = s3ModuleImport.default;
+        const result = await s3Module.uploadJson('test-bucket', 'test.json', { data: 'test' });
+
+        expect(result).toBe(true);
+        expect(Minio.Client).toHaveBeenCalledWith(
+          expect.objectContaining({
+            accessKey: 'test-access-key',
+            secretKey: 'test-secret-key'
+          })
+        );
       });
     });
 

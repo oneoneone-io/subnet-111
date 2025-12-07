@@ -15,8 +15,9 @@ describe('#utils/validator/send-for-digestion.js', () => {
     process.env.PLATFORM_TOKEN = 'test';
   });
 
-  test('should send the data for digestion', async () => {
-    await sendForDigestion('google-maps-reviews', '123', [{ id: 1, name: 'test' }]);
+  test('should send the data for digestion with metadata', async () => {
+    const metadata = { keyword: '"bitcoin"', name: 'Test Place' };
+    await sendForDigestion('google-maps-reviews', '123', [{ id: 1, name: 'test' }], metadata);
     expect(retryFetch).toHaveBeenCalledTimes(1);
     expect(retryFetch).toHaveBeenCalledWith('https://oneoneone.io/api/digest', {
       method: 'POST',
@@ -27,6 +28,8 @@ describe('#utils/validator/send-for-digestion.js', () => {
       body: JSON.stringify({
         type: 'google-maps-reviews',
         miner_uid: '123',
+        keyword: 'bitcoin',
+        name: 'Test Place',
         data: [{ id: 1, name: 'test' }]
       })
     });

@@ -13,7 +13,7 @@ jest.mock('#utils/validator/send-for-digestion.js', () => jest.fn());
 describe('#utils/validator/google-maps/score/prepare-and-send-for-digestion.js', () => {
   let responses;
   let minerUIDs;
-  let fid;
+  let metadata;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -52,18 +52,18 @@ describe('#utils/validator/google-maps/score/prepare-and-send-for-digestion.js',
         totalScore: 5,
     }]];
     minerUIDs = [0];
-    fid = 'fid123';
+    metadata = { dataId: 'fid123', name: 'Test Place' };
     sendForDigestion.mockResolvedValue({status: 200});
   });
 
   test('should send the data for digestion', async () => {
-    await prepareAndSendForDigestion(responses, minerUIDs, fid);
+    await prepareAndSendForDigestion(responses, minerUIDs, metadata);
     expect(sendForDigestion).toHaveBeenCalledTimes(2);
   });
 
   test('should put an error if the data is not sent for digestion', async () => {
     sendForDigestion.mockResolvedValue({status: 400});
-    await prepareAndSendForDigestion(responses, minerUIDs, fid);
+    await prepareAndSendForDigestion(responses, minerUIDs, metadata);
     expect(logger.info).toHaveBeenCalledTimes(2);
   });
 });

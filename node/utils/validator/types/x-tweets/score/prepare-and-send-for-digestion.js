@@ -34,7 +34,7 @@ const prepareAndSendForDigestion = async (responses, minerUIDs, metadata) => {
         const { valid: validTweets } = array.validateArray(uniqueTweets, requiredFields);
 
         // Send for digestion
-        const apiResponse = await sendForDigestion('x-tweets', minerUID, validTweets);
+        const apiResponse = await sendForDigestion('x-tweets', minerUID, validTweets, metadata);
 
         if(apiResponse?.status === 200){
             logger.info(`X Tweets - UID ${minerUID}: Sent for digestion successfully`);
