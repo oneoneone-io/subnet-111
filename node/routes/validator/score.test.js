@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/no-useless-undefined */
 import scoreRoute from './score.js';
 import responseService from '#modules/response/index.js';
 import time from '#modules/time/index.js';
