@@ -92,8 +92,8 @@ describe('#utils/validator/types/x-tweets/score/prepare-and-send-for-digestion.j
     expect(array.validateArray).toHaveBeenCalledWith(uniqueTweets2, expectedRequiredFields);
 
     // Verify send for digestion
-    expect(sendForDigestion).toHaveBeenCalledWith('x-tweets', 'miner1', validTweets1);
-    expect(sendForDigestion).toHaveBeenCalledWith('x-tweets', 'miner2', validTweets2);
+    expect(sendForDigestion).toHaveBeenCalledWith('x-tweets', 'miner1', validTweets1, metadata);
+    expect(sendForDigestion).toHaveBeenCalledWith('x-tweets', 'miner2', validTweets2, metadata);
 
     // Verify success logging
     expect(logger.info).toHaveBeenCalledWith('X Tweets - UID miner1: Sent for digestion successfully');
@@ -116,8 +116,8 @@ describe('#utils/validator/types/x-tweets/score/prepare-and-send-for-digestion.j
     await prepareAndSendForDigestion(responses, minerUIDs, metadata);
 
     // Should use index as minerUID for second response
-    expect(sendForDigestion).toHaveBeenCalledWith('x-tweets', 'miner1', []);
-    expect(sendForDigestion).toHaveBeenCalledWith('x-tweets', 1, []);
+    expect(sendForDigestion).toHaveBeenCalledWith('x-tweets', 'miner1', [], metadata);
+    expect(sendForDigestion).toHaveBeenCalledWith('x-tweets', 1, [], metadata);
   });
 
   test('should handle empty responses array', async () => {
@@ -146,7 +146,7 @@ describe('#utils/validator/types/x-tweets/score/prepare-and-send-for-digestion.j
 
     await prepareAndSendForDigestion(responses, minerUIDs, metadata);
 
-    expect(sendForDigestion).toHaveBeenCalledWith('x-tweets', 'miner1', []);
+    expect(sendForDigestion).toHaveBeenCalledWith('x-tweets', 'miner1', [], metadata);
     // Should not log success message for non-200 status
     expect(logger.info).not.toHaveBeenCalledWith('X Tweets - UID miner1: Sent for digestion successfully');
   });

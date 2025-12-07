@@ -53,7 +53,7 @@ describe('routes/validator/score.js', () => {
       id: 'google-maps-reviews',
       name: 'Google Maps Reviews',
       score: jest.fn(),
-      prepareAndSendForDigestion: jest.fn(),
+      prepareAndSendForDigestion: jest.fn().mockResolvedValue(undefined),
       scoreConstants: {
         SPEED: 0.3,
         VOLUME: 0.5,
@@ -502,19 +502,19 @@ describe('routes/validator/score.js', () => {
       });
     });
 
-    test('should return internalServerError if prepareAndSendForDigestion throws error', async () => {
-      selectedType.prepareAndSendForDigestion.mockImplementation(() => {
-        throw new Error('Digestion failed');
-      });
+    test('should log error if prepareAndSendForDigestion rejects but still return success', async () => {
+      selectedType.prepareAndSendForDigestion.mockRejectedValue(new Error('Digestion failed'));
 
       await scoreRoute.execute(request, response);
 
-      expect(responseService.internalServerError).toHaveBeenCalledWith(response, {
-        error: 'Failed to score responses',
-        message: 'Digestion failed',
-        timestamp
-      });
-      expect(logger.error).toHaveBeenCalledWith('Error scoring responses:', expect.any(Error));
+      // Should still return success since this is a fire-and-forget operation
+      expect(responseService.success).toHaveBeenCalledWith(response, expect.any(Object));
+      
+      // Wait for the promise rejection to be handled
+      await new Promise(resolve => setImmediate(resolve));
+      
+      // Should log the error from the catch handler
+      expect(logger.error).toHaveBeenCalledWith('Error in prepareAndSendForDigestion: Digestion failed');
     });
 
     test('should process complex request with all parameters', async () => {

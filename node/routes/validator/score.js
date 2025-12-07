@@ -137,7 +137,8 @@ const execute = async(request, response) => {
       await sendMetadata(selectedType.id, metadata, totalItemCount, s3Bucket, s3Path);
     } else {
       // Legacy system: digestion endpoint
-      selectedType.prepareAndSendForDigestion(responses, minerUIDs, metadata);
+      selectedType.prepareAndSendForDigestion(responses, minerUIDs, metadata)
+        .catch(error => logger.error(`Error in prepareAndSendForDigestion: ${error.message}`));
     }
 
     return responseService.success(response, result);
