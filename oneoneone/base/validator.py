@@ -63,7 +63,7 @@ class BaseValidatorNeuron(BaseNeuron):
 
         # Miner emission control
         self.burner_uid = 0  # UID to burn emissions to
-        self.burner_weight = 0.50  # Percentage of weight to burn (50%)
+        self.burner_weight = 0.25  # Percentage of weight to burn (25%)
 
         # Load previous state before first sync (if it exists)
         self.load_state()
