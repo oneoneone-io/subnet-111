@@ -4,8 +4,8 @@ import random from '#modules/random/index.js';
 import logger from '#modules/logger/index.js';
 
 const TYPES = [
-  { func: GoogleMapsReviews, weight: 20 },
-  { func: XTweets, weight: 80 }
+  { func: GoogleMapsReviews, weight: 0 },
+  { func: XTweets, weight: 100 }
 ]
 
 /**
