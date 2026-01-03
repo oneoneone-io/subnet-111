@@ -80,11 +80,63 @@ Rules:
   "photosynthesis"
 ]`;
 
+const KEYWORD_GENERATION_PROMPT_TECHNOLOGY = `Generate a list of 50 real, diverse technology keywords suitable for tweet searches.
+
+Rules:
+1. All keywords must be real technology topics, platforms, or concepts.
+2. Include a balanced variety:
+   - software and programming languages
+   - tech companies and platforms
+   - emerging technologies (blockchain, VR, IoT)
+   - cybersecurity and privacy
+   - hardware and devices
+   - internet culture and web3
+   - tech industry events and trends
+   - notable tech figures and innovations
+3. Avoid extremely common terms (e.g., "app", "computer", "internet").
+4. Keywords should be short (1–3 words).
+5. Return as a JSON array of strings, nothing else, exactly 50 items.
+6. YOU MUST USE THIS FORMAT. Example format:
+[
+  "rust language",
+  "edge computing",
+  "open source",
+  "semiconductor",
+  "metaverse"
+]`;
+
+const KEYWORD_GENERATION_PROMPT_CULTURE = `Generate a list of 50 real, diverse culture and entertainment keywords suitable for tweet searches.
+
+Rules:
+1. All keywords must be real cultural topics, art forms, or entertainment genres.
+2. Include a balanced variety:
+   - music genres and instruments
+   - film and television genres
+   - art movements and styles
+   - literature and poetry
+   - theater and performance
+   - cultural festivals and traditions
+   - fashion and design
+   - notable cultural figures and works
+3. Avoid extremely common terms (e.g., "movie", "song", "art").
+4. Keywords should be short (1–3 words).
+5. Return as a JSON array of strings, nothing else, exactly 50 items.
+6. YOU MUST USE THIS FORMAT. Example format:
+[
+  "impressionism",
+  "jazz fusion",
+  "haiku",
+  "film noir",
+  "avant-garde"
+]`;
+
 // Array of all prompts to randomly choose from
 const KEYWORD_PROMPTS = [
   KEYWORD_GENERATION_PROMPT_GENERAL,
   KEYWORD_GENERATION_PROMPT_POLITICS,
-  KEYWORD_GENERATION_PROMPT_SCIENCE
+  KEYWORD_GENERATION_PROMPT_SCIENCE,
+  KEYWORD_GENERATION_PROMPT_TECHNOLOGY,
+  KEYWORD_GENERATION_PROMPT_CULTURE
 ];
 
 /**
