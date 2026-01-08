@@ -21,7 +21,7 @@ const checkKeywordPresence = (tweet, keyword) => {
   // Check in hashtags
   if (tweet.hashtags && Array.isArray(tweet.hashtags)) {
     for (const hashtag of tweet.hashtags) {
-      if (hashtag.toLowerCase().includes(keywordLower)) {
+      if (typeof hashtag === 'string' && hashtag?.toLowerCase()?.includes(keywordLower)) {
         return true;
       }
     }
