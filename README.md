@@ -239,13 +239,13 @@ pip install bittensor-cli
 btcli subnet register --no_prompt --wallet.name "miner" --wallet.hotkey "default" --netuid "111"
 ```
 
-#### Testnet (Subnet 376)
+#### Testnet (Subnet 427)
 
 For testing and development, you can use the testnet:
 
 ```bash
-# Register to testnet subnet 376 (replace with your wallet details)
-btcli subnet register --no_prompt --wallet.name "miner" --wallet.hotkey "default" --netuid "376" --subtensor.network test
+# Register to testnet subnet 427 (replace with your wallet details)
+btcli subnet register --no_prompt --wallet.name "miner" --wallet.hotkey "default" --netuid "427" --subtensor.network test
 ```
 
 **Important Notes:**
@@ -275,12 +275,12 @@ pm2 start ./auto-updater.sh --name "autoupdater-validator-prod" -- validator 111
 # Start miner with auto-updater (recommended)
 pm2 start ./auto-updater.sh --name "autoupdater-miner-prod" -- miner 111 miner default 9001
 
-# Testnet examples (subnet 376)
+# Testnet examples (subnet 427)
 # Start validator with auto-updater on testnet
-pm2 start ./auto-updater.sh --name "autoupdater-validator-test" -- validator 376 validator default 9000 test
+pm2 start ./auto-updater.sh --name "autoupdater-validator-test" -- validator 427 validator default 9000 test
 
 # Start miner with auto-updater on testnet
-pm2 start ./auto-updater.sh --name "autoupdater-miner-test" -- miner 376 miner default 9001 test
+pm2 start ./auto-updater.sh --name "autoupdater-miner-test" -- miner 427 miner default 9001 test
 
 # View auto-updater logs
 pm2 logs autoupdater-validator-prod
@@ -314,8 +314,8 @@ pm2 start npm --name node-miner --cwd ./node -- run miner:start
 # Mainnet (subnet 111)
 pm2 start "python neurons/miner.py --netuid 111 --wallet.name <your_wallet_name> --wallet.hotkey <your_hotkey_name> --logging.debug --axon.port 9001" --name miner
 
-# Testnet (subnet 376)
-pm2 start "python neurons/miner.py --netuid 376 --wallet.name <your_wallet_name> --wallet.hotkey <your_hotkey_name> --logging.debug --axon.port 9001 --subtensor.network test" --name miner-test
+# Testnet (subnet 427)
+pm2 start "python neurons/miner.py --netuid 427 --wallet.name <your_wallet_name> --wallet.hotkey <your_hotkey_name> --logging.debug --axon.port 9001 --subtensor.network test" --name miner-test
 ```
 
 ##### For Validators
@@ -327,8 +327,8 @@ pm2 start npm --name node-validator --cwd ./node -- run validator:start
 # Mainnet (subnet 111)
 pm2 start "python neurons/validator.py --netuid 111 --wallet.name <your_wallet_name> --wallet.hotkey <your_hotkey_name> --logging.debug --axon.port 9000" --name validator
 
-# Testnet (subnet 376)
-pm2 start "python neurons/validator.py --netuid 376 --wallet.name <your_wallet_name> --wallet.hotkey <your_hotkey_name> --logging.debug --axon.port 9000 --subtensor.network test" --name validator-test
+# Testnet (subnet 427)
+pm2 start "python neurons/validator.py --netuid 427 --wallet.name <your_wallet_name> --wallet.hotkey <your_hotkey_name> --logging.debug --axon.port 9000 --subtensor.network test" --name validator-test
 ```
 
 #### Managing PM2 Processes
